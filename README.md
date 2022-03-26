@@ -1,5 +1,5 @@
 
-Phlox workflow in [calcit-js](http://calcit-lang.org/)
+Explain ternary tree
 ----
 
 ### Usage
