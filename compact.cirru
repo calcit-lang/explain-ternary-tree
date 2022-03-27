@@ -25,6 +25,8 @@
             let
                 cursor $ []
                 states $ :states store
+                state $ or (:data states)
+                  {} $ :finger? false
               container
                 {} $ :position
                   [] 0 $ negate (* 0.5 js/window.innerHeight)
@@ -47,8 +49,23 @@
                     :fill $ hslx 200 50 40
                     :color $ hslx 200 0 80
                     :on-change $ fn (value d!) (d! :n value)
-                ; comp-ternary-demo (>> states :ternary) store
-                comp-fingertree-demo $ :n store
+                comp-button $ {} (:text |Start)
+                  :position $ [] 480 10
+                  :align-right? false
+                  :on-pointertap $ fn (e d!)
+                    reset! *inc-task $ flipped js/setInterval 1000
+                      fn () $ d! :inc nil
+                comp-button $ {}
+                  :text $ if (:finger? state) "\"Ternary?" |Finger?
+                  :position $ []
+                    + 260 $ * -0.5 js/window.innerWidth
+                    - js/window.innerHeight 80
+                  :align-right? false
+                  :on-pointertap $ fn (e d!)
+                    d! cursor $ update state :finger? not
+                if (:finger? state)
+                  comp-fingertree-demo $ :n store
+                  comp-ternary-demo $ :n store
     |app.schema $ {}
       :ns $ quote (ns app.schema)
       :defs $ {}
@@ -102,7 +119,7 @@
               println "\"dispatch!" op op-data
             if
               and (= op :inc)
-                >= (:n @*store) 106
+                >= (:n @*store) 200
               js/clearInterval @*inc-task
               let
                   op-id $ nanoid
@@ -139,9 +156,9 @@
           app.task :refer $ *inc-task
       :defs $ {}
         |comp-ternary-demo $ quote
-          defn comp-ternary-demo (states store)
+          defn comp-ternary-demo (size)
             let
-                tree $ get-vec-tree (:n store)
+                tree $ get-vec-tree size
               comp-node tree ([] -200 20) true 0
         |count-recursive $ quote
           defn count-recursive (tree)
@@ -393,7 +410,7 @@
           defn comp-finger-node (tree base level)
             let
                 w-unit 8
-                h-unit 40
+                h-unit 32
               if (list? tree)
                 case-default (nth0 tree) (raise "\"unknown type")
                   :finger-tree $ container ({})
