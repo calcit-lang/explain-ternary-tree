@@ -30,7 +30,8 @@ jobs:
         && git clone https://github.com/calcit-lang/lilac.git
         && git clone https://github.com/calcit-lang/memof.git
         && git clone https://github.com/Respo/respo-ui.calcit.git
-        && git clone https://github.com/Phlox-GL/phlox.git --branch 0.4.27
+        && git clone https://github.com/Phlox-GL/phlox.git
+        && git clone https://github.com/Quatrefoil-GL/touch-control.git
 
     - name: "compiles to js"
       run: >
