@@ -408,7 +408,7 @@
                         xs $ range n
                         text $ &format-ternary-tree xs
                         tree $ first
-                          first $ parse-cirru text
+                          first $ parse-cirru-list text
                       quasiquote $ quote (~ tree)
                   dec n
         |comp-node $ quote
