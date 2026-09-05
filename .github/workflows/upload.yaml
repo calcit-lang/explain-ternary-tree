@@ -72,18 +72,13 @@ jobs:
           yarn vite build --base=./
 
       - name: Deploy to server
+        id: deploy
+        uses: Pendect/action-rsyncer@v2.0.0
         env:
           DEPLOY_KEY: ${{ secrets.rsync_private_key }}
-          RSYNC_KNOWN_HOSTS: ${{ secrets.rsync_known_hosts }}
-        run: |
-          test -n "$DEPLOY_KEY"
-          test -n "$RSYNC_KNOWN_HOSTS"
-          install -m 700 -d "$RUNNER_TEMP/ssh"
-          printf '%s\n' "$RSYNC_KNOWN_HOSTS" > "$RUNNER_TEMP/ssh/known_hosts"
-          chmod 600 "$RUNNER_TEMP/ssh/known_hosts"
-          eval "$(ssh-agent -s)"
-          trap 'ssh-agent -k' EXIT
-          printf '%s\n' "$DEPLOY_KEY" | tr -d '\r' | ssh-add -
-          rsync -avzr --progress \
-            -e "ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$RUNNER_TEMP/ssh/known_hosts" \
-            dist/* "rsync-user@tiye.me:/web-assets/repo/${{ github.repository }}"
+        with:
+          flags: "-avzr --progress"
+          options: ""
+          ssh_options: ""
+          src: "dist/*"
+          dest: "rsync-user@tiye.me:/web-assets/repo/${{ github.repository }}"
