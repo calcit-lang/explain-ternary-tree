@@ -72,13 +72,23 @@ jobs:
           yarn vite build --base=./
 
       - name: Deploy to server
-        id: deploy
-        uses: Pendect/action-rsyncer@v2.0.0
         env:
           DEPLOY_KEY: ${{ secrets.rsync_private_key }}
-        with:
-          flags: "-avzr --progress"
-          options: ""
-          ssh_options: ""
-          src: "dist/*"
-          dest: "rsync-user@tiye.me:/web-assets/repo/${{ github.repository }}"
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_KEY"
+          ssh_dir="$RUNNER_TEMP/explain-ternary-tree-ssh"
+          key_file="$ssh_dir/id_ed25519"
+          known_hosts_file="$GITHUB_WORKSPACE/.github/ssh_known_hosts"
+          matching_keys="$ssh_dir/tiye.me-ed25519"
+          install -d -m 700 "$ssh_dir"
+          install -m 600 /dev/null "$key_file"
+          printf '%s\n' "$DEPLOY_KEY" | tr -d '\r' > "$key_file"
+          trap 'rm -f "$key_file" "$matching_keys"' EXIT
+          awk '$1 == "tiye.me" && $2 == "ssh-ed25519" { print }' "$known_hosts_file" > "$matching_keys"
+          test "$(awk 'NF { count += 1 } END { print count + 0 }' "$matching_keys")" -eq 1
+          actual_fingerprint="$(ssh-keygen -lf "$matching_keys" | awk '{ print $2 }')"
+          test "$actual_fingerprint" = 'SHA256:f0ME3+UEzCM357Vtdic/bay2ygVUULBJ2pfaPTjBYhg'
+          rsync -avzr --progress \
+            -e "ssh -i $key_file -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$known_hosts_file" \
+            dist/* "rsync-user@tiye.me:/web-assets/repo/${GITHUB_REPOSITORY}"
