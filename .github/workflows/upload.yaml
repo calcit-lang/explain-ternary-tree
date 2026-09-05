@@ -74,16 +74,21 @@ jobs:
       - name: Deploy to server
         env:
           DEPLOY_KEY: ${{ secrets.rsync_private_key }}
-          RSYNC_KNOWN_HOSTS: ${{ secrets.rsync_known_hosts }}
         run: |
+          set -euo pipefail
           test -n "$DEPLOY_KEY"
-          test -n "$RSYNC_KNOWN_HOSTS"
-          install -m 700 -d "$RUNNER_TEMP/ssh"
-          printf '%s\n' "$RSYNC_KNOWN_HOSTS" > "$RUNNER_TEMP/ssh/known_hosts"
-          chmod 600 "$RUNNER_TEMP/ssh/known_hosts"
-          eval "$(ssh-agent -s)"
-          trap 'ssh-agent -k' EXIT
-          printf '%s\n' "$DEPLOY_KEY" | tr -d '\r' | ssh-add -
+          ssh_dir="$RUNNER_TEMP/explain-ternary-tree-ssh"
+          key_file="$ssh_dir/id_ed25519"
+          known_hosts_file="$GITHUB_WORKSPACE/.github/ssh_known_hosts"
+          matching_keys="$ssh_dir/tiye.me-ed25519"
+          install -d -m 700 "$ssh_dir"
+          install -m 600 /dev/null "$key_file"
+          printf '%s\n' "$DEPLOY_KEY" | tr -d '\r' > "$key_file"
+          trap 'rm -f "$key_file" "$matching_keys"' EXIT
+          awk '$1 == "tiye.me" && $2 == "ssh-ed25519" { print }' "$known_hosts_file" > "$matching_keys"
+          test "$(awk 'NF { count += 1 } END { print count + 0 }' "$matching_keys")" -eq 1
+          actual_fingerprint="$(ssh-keygen -lf "$matching_keys" | awk '{ print $2 }')"
+          test "$actual_fingerprint" = 'SHA256:f0ME3+UEzCM357Vtdic/bay2ygVUULBJ2pfaPTjBYhg'
           rsync -avzr --progress \
-            -e "ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$RUNNER_TEMP/ssh/known_hosts" \
-            dist/* "rsync-user@tiye.me:/web-assets/repo/${{ github.repository }}"
+            -e "ssh -i $key_file -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$known_hosts_file" \
+            dist/* "rsync-user@tiye.me:/web-assets/repo/${GITHUB_REPOSITORY}"
