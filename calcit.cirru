@@ -3,8 +3,7 @@
   :about "|Machine-generated snapshot. Do not edit directly — changes will be overwritten. Use `calcit query` to inspect and `calcit edit`/`calcit tree` to modify. Run `calcit docs agents --contract` before mutations; use `--full` for first orientation or changed contract digest. Manual edits must follow format and schema conventions, then run `calcit edit format`."
   :package |app
   :entries $ {} $ :default
-    {} (:description |) (:init-fn 'app.main/main!) (:mode :js)
-      :reload-fn 'app.main/reload!
+    {} (:description |) (:init-fn 'app.main/main!) (:mode :js) (:reload-fn 'app.main/reload!)
       :feature-policy $ {}
       :modules $ [] |memof/ |lilac/ |respo-ui.calcit/ |phlox/ |touch-control/
       :type-slots $ {}
@@ -37,8 +36,7 @@
                 comp-button $ {} (:text |Fullscreen)
                   :position $ [] 400 10
                   :align-right? false
-                  :on-pointertap $ fn (e d!)
-                    js/document.body.requestFullscreen
+                  :on-pointertap $ fn (e d!) (js/document.body.requestFullscreen)
                 comp-button $ {} (:text |Start)
                   :position $ [] 480 10
                   :align-right? false
@@ -61,11 +59,11 @@
                   :align-right? false
                   :on-pointertap $ fn (e d!)
                     d! cursor $ update state :finger? not
-                if finger?
-                  comp-fingertree-demo n
-                  comp-ternary-demo n
+                if finger? (comp-fingertree-demo n) (comp-ternary-demo n)
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+            :args $ [] 'Dynamic
+            :features $ #{} :js-ffi
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.comp.container
           :require
@@ -89,8 +87,7 @@
               if (list? tree)
                 case-default (nth0 tree) (raise "|unknown type")
                   :finger-tree $ container ({})
-                    case-default (nth1 tree)
-                      raise "|unknown finger tree variant"
+                    case-default (nth1 tree) (raise "|unknown finger tree variant")
                       :empty $ circle $ {} (:position base) (:radius 8)
                         :line-style $ {} (:width 1)
                           :color $ hclx 30 90 80
@@ -103,7 +100,7 @@
                             :points $ [] base next
                           comp-finger-node (nth2 tree) next level
                       :deep $ let
-                          inside $ unsafe-coerce (nth2 tree) (:: 'Map 'Tag 'Dynamic)
+                          inside $ assert-type (nth2 tree) (:: 'Map 'Tag 'Dynamic)
                           left-tree $ option:unwrap-or (get inside :left) nil
                           middle-tree $ option:unwrap-or (get inside :middle) nil
                           right-tree $ option:unwrap-or (get inside :right) nil
@@ -133,8 +130,7 @@
                         :alpha 1
                       :fill $ hclx 30 90 80
                   :node $ container ({})
-                    case-default (nth1 tree)
-                      raise "|unknown node variant"
+                    case-default (nth1 tree) (raise "|unknown node variant")
                       :node2 $ let
                           inside $ nth2 tree
                           left $ complex/add base $ [] (* -1 w-unit) (* 1.5 h-unit)
@@ -177,8 +173,7 @@
                       :fill $ hclx 40 80 60
                   :digit $ let
                       inside $ nth2 tree
-                    case-default (nth1 tree)
-                      raise "|unknown digit variant"
+                    case-default (nth1 tree) (raise "|unknown digit variant")
                       :d1 $ let
                           next $ complex/add base $ [] 0 (* 1.5 h-unit)
                         container ({})
@@ -251,7 +246,8 @@
                   :align :center
                   :style $ {} (:fill |red) (:font-size 10) (:font-family |Hind)
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+            :args $ [] 'Dynamic 'Dynamic 'Number
         'comp-fingertree-demo $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-fingertree-demo (size)
             let
@@ -265,22 +261,23 @@
               ; js/console.log tree
               comp-finger-node tree ([] -300 20) 0
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+            :args $ [] 'Number
         'digit-append $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn digit-append (digits x)
             if
               = :digit $ &list:nth digits 0
               let
-                  inside $ unsafe-coerce (&list:nth digits 2) (:: 'List 'Dynamic)
-                case-default (&list:nth digits 1)
-                  raise "|unknown digit varient"
+                  inside $ assert-type (&list:nth digits 2) (:: 'List 'Dynamic)
+                case-default (&list:nth digits 1) (raise "|unknown digit varient")
                   :d1 $ [] :digit :d2 $ conj inside x
                   :d2 $ [] :digit :d3 $ conj inside x
                   :d3 $ [] :digit :d4 $ conj inside x
                   :d4 $ raise "|already full, cannot append"
               raise "|expected digits"
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+            :args $ [] (:: 'List 'Dynamic) 'Dynamic
         'digit-full? $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn digit-full? (digits)
             if
@@ -288,56 +285,53 @@
               = :d4 $ &list:nth digits 1
               raise "|expected digit variant"
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Bool)
+            :args $ [] $ :: 'List 'Dynamic
         'finger-append $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn finger-append (tree x)
             if
               = :finger-tree $ &list:nth tree 0
-              case-default (&list:nth tree 1)
-                raise "|unknown variant of finger tree"
+              case-default (&list:nth tree 1) (raise "|unknown variant of finger tree")
                 :empty $ [] :finger-tree :single x
                 :single $ [] :finger-tree :deep $ {}
                   :left $ [] :digit :d1 $ [] (nth tree 2)
                   :middle $ [] :finger-tree :empty nil
                   :right $ [] :digit :d1 $ [] x
                 :deep $ let
-                    inside $ unsafe-coerce (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
-                    right-digit $ unsafe-coerce
+                    inside $ assert-type (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
+                    right-digit $ assert-type
                       option:unwrap-or (get inside :right)
                         [] :digit :d1 $ []
                       :: 'List 'Dynamic
-                    middle-tree $ unsafe-coerce
+                    middle-tree $ assert-type
                       option:unwrap-or (get inside :middle) ([] :finger-tree :empty nil)
                       :: 'List 'Dynamic
                   if (digit-full? right-digit)
                     let
-                        digit-internal $ unsafe-coerce (&list:nth right-digit 2) (:: 'List 'Dynamic)
+                        digit-internal $ assert-type (&list:nth right-digit 2) (:: 'List 'Dynamic)
                       [] :finger-tree :deep $ -> inside
                         assoc :middle $ finger-append middle-tree $ [] :node :node3 (take digit-internal 3)
                         assoc :right $ [] :digit :d2 $ [] (&list:nth digit-internal 3) x
                     [] :finger-tree :deep $ assoc inside :right $ digit-append right-digit x
               raise "|expected finger tree"
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+            :args $ [] (:: 'List 'Dynamic) 'Dynamic
         'finger-count $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn finger-count (tree)
             if (list? tree)
-              case-default (nth0 tree)
-                raise "|unknown kind of tree"
-                :finger-tree $ case-default (nth1 tree)
-                  raise "|unknown kind of finger-tree"
-                  :empty 0
+              case-default (nth0 tree) (raise "|unknown kind of tree")
+                :finger-tree $ case-default (nth1 tree) (raise "|unknown kind of finger-tree") (:empty 0)
                   :single $ let
                       inside $ nth2 tree
                     finger-count inside
                   :deep $ let
-                      inside $ unsafe-coerce (nth2 tree) (:: 'Map 'Tag 'Dynamic)
+                      inside $ assert-type (nth2 tree) (:: 'Map 'Tag 'Dynamic)
                       left-tree $ option:unwrap-or (get inside :left) nil
                       middle-tree $ option:unwrap-or (get inside :middle) nil
                       right-tree $ option:unwrap-or (get inside :right) nil
                     + (finger-count left-tree) (finger-count middle-tree) (finger-count right-tree)
-                :node $ case-default (nth1 tree)
-                  raise "|unknown kind of node"
+                :node $ case-default (nth1 tree) (raise "|unknown kind of node")
                   :node2 $ let
                       inside $ nth tree 2
                     +
@@ -351,8 +345,7 @@
                       finger-count $ nth inside 2
                 :digit $ let
                     inside $ nth2 tree
-                  case-default (nth1 tree)
-                    raise "|unknown kind of digit"
+                  case-default (nth1 tree) (raise "|unknown kind of digit")
                     :d1 $ finger-count $ nth inside 0
                     :d2 $ +
                       finger-count $ nth inside 0
@@ -368,15 +361,13 @@
                       finger-count $ nth inside 3
               , 1
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'Dynamic
         'finger-count-left $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn finger-count-left (tree)
             if (list? tree)
-              case-default (first tree)
-                raise "|unknown kind of tree"
-                :finger-tree $ case-default (nth tree 1)
-                  raise "|unknown kind of finger-tree"
-                  :empty 0
+              case-default (first tree) (raise "|unknown kind of tree")
+                :finger-tree $ case-default (nth tree 1) (raise "|unknown kind of finger-tree") (:empty 0)
                   :single $ let
                       inside $ nth tree 2
                     finger-count inside
@@ -389,15 +380,13 @@
                 :digit $ finger-count tree
               , 1
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'Dynamic
         'finger-count-right $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn finger-count-right (tree)
             if (list? tree)
-              case-default (first tree)
-                raise "|unknown kind of tree"
-                :finger-tree $ case-default (nth tree 1)
-                  raise "|unknown kind of finger-tree"
-                  :empty 0
+              case-default (first tree) (raise "|unknown kind of tree")
+                :finger-tree $ case-default (nth tree 1) (raise "|unknown kind of finger-tree") (:empty 0)
                   :single $ let
                       inside $ nth tree 2
                     finger-count inside
@@ -410,7 +399,8 @@
                 :digit $ finger-count tree
               , 1
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'Dynamic
         'nth0 $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defmacro nth0 (xs)
             quasiquote $ nth ~xs 0
@@ -531,26 +521,29 @@
                   :style $ {} (:font-size 13) (:font-family |Hind)
                     :fill $ hclx 220 90 80
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+            :args $ [] 'Dynamic 'Dynamic 'Bool 'Number
         'comp-ternary-demo $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-ternary-demo (size)
             let
                 tree $ get-vec-tree size
               comp-node tree ([] -200 20) true 0
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+            :args $ [] 'Number
         'count-recursive $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn count-recursive (tree)
             if (list? tree)
               foldl (map tree count-recursive) 0 &+
               , 1
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Number)
+            :args $ [] 'Dynamic
         'get-vec-tree $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn get-vec-tree (n)
-            get ternary-tree-dict n
+          :code $ quote $ defn get-vec-tree (n) (get ternary-tree-dict n)
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+            :args $ [] 'Number
         'style-line $ %{} 'CodeEntry (:doc |)
           :code $ quote $ def style-line
             {} (:width 2) (:alpha 1)
@@ -581,13 +574,7 @@
           :schema $ :: 'Dynamic
         'site $ %{} 'CodeEntry (:doc |)
           :code $ quote $ def site
-            {}
-              :dev-ui |http://localhost:8100/main.css
-              :release-ui |http://cdn.tiye.me/favored-fonts/main.css
-              :cdn-url |http://cdn.tiye.me/phlox/
-              :title |Phlox
-              :icon |http://cdn.tiye.me/logo/quamolit.png
-              :storage-key |phlox
+            {} (:dev-ui |http://localhost:8100/main.css) (:release-ui |http://cdn.tiye.me/favored-fonts/main.css) (:cdn-url |http://cdn.tiye.me/phlox/) (:title |Phlox) (:icon |http://cdn.tiye.me/logo/quamolit.png) (:storage-key |phlox)
           :examples $ []
           :schema $ :: 'Dynamic
       :ns $ %{} 'NsEntry (:doc |)
@@ -597,7 +584,25 @@
         '*store $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defatom *store schema/store
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Ref 'Dynamic
+        'FontFaceObserverHost $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ deftrait FontFaceObserverHost
+            .load $ :: 'Fn $ {}
+              :args $ []
+              :return 'JsObject
+          :examples $ []
+          :ffi $ {} (:backend :js) (:kind :external-object) (:target :browser)
+          :schema $ :: 'Trait
+        'PromiseHost $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ deftrait PromiseHost
+            .then $ :: 'Fn $ {}
+              :args $ [] $ :: 'Fn
+                {} (:return 'Unit)
+                  :args $ [] 'Dynamic
+              :return 'Dynamic
+          :examples $ []
+          :ffi $ {} (:backend :js) (:kind :external-object) (:target :browser)
+          :schema $ :: 'Trait
         'dispatch! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn dispatch! (op op-data)
             when
@@ -613,44 +618,47 @@
                 js/clearInterval @*inc-task
                 let
                     op-id $ nanoid
-                    op-time $ js/Date.now
+                    op-time $ unsafe-coerce (js/Date.now) 'Number
                   reset! *store $ updater @*store op op-data op-id op-time
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Unit)
+            :args $ [] 'Tag 'Dynamic
+            :features $ #{} :js-ffi
         'main! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn main! () (; js/console.log PIXI)
             if dev? $ load-console-formatter!
             let
-                font-load $ unsafe-coerce
-                  ->
-                    new FontFaceObserver/default "|Josefin Sans"
-                    .!load
-                  , 'JsObject
+                observer $ unsafe-coerce (new FontFaceObserver/default "|Josefin Sans") FontFaceObserverHost
+                font-load $ unsafe-coerce (.!load observer) PromiseHost
               .!then font-load $ fn (event) (render-app!)
             add-watch *store :change $ fn (store prev) (render-app!)
             render-control!
             start-control-loop! 8 on-control-event
             println "|App Started"
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Unit)
+            :args $ []
+            :features $ #{} :js-ffi
         'reload! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn reload! ()
             if (nil? build-errors)
-              do (println "|Code updated.")
-                clear-phlox-caches!
-                remove-watch *store :change
+              do (println "|Code updated.") (clear-phlox-caches!) (remove-watch *store :change)
                 add-watch *store :change $ fn (store prev) (render-app!)
                 render-app!
                 replace-control-loop! 8 on-control-event
                 hud! |ok~ |Ok
               hud! |error build-errors
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Unit)
+            :args $ []
+            :features $ #{} :js-ffi
         'render-app! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn render-app! (? arg)
-            render! (comp-container @*store) dispatch! $ or arg $ {}
+          :code $ quote $ defn render-app! (& args)
+            render! (comp-container @*store) dispatch! $ option:unwrap-or (first args) ({})
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:rest 'Dynamic) (:return 'Unit)
+            :args $ []
+            :features $ #{} :js-ffi
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.main
           :require (|pixi.js :as PIXI)
@@ -673,7 +681,7 @@
               :states $ {} $ :cursor ([])
               :n 1
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Map 'Tag 'Dynamic
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.schema
     'app.task $ %{} 'FileEntry
@@ -681,7 +689,7 @@
         %{} 'CodeEntry (:doc |)
           :code $ quote $ defatom *inc-task 0
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Ref 'Dynamic
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.task
     'app.updater $ %{} 'FileEntry
@@ -693,11 +701,12 @@
               :n $ assoc store :n op-data
               :inc $ update store :n inc
               :states $ let
-                  payload $ unsafe-coerce op-data $ :: 'List 'Dynamic
+                  payload $ assert-type op-data $ :: 'List 'Dynamic
                 update-states store (&list:nth payload 0) (&list:nth payload 1)
               :hydrate-storage op-data
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+            :args $ [] 'Dynamic 'Tag 'Dynamic 'String 'Number
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.updater
           :require $ [] phlox.cursor :refer $ [] update-states
