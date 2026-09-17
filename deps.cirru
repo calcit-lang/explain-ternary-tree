@@ -1,7 +1,7 @@
 
-{} (:calcit-version |0.15.2)
+{} (:calcit-version |0.15.3)
   :version |0.4.10
-  :dependencies $ {} (|Phlox-GL/phlox |0.7.8)
+  :dependencies $ {} (|Phlox-GL/phlox |0.7.9)
     |Respo/respo-ui.calcit |0.7.23
     |Triadica/touch-control |0.0.21
     |calcit-lang/lilac |0.5.9

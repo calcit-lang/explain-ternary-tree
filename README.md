@@ -23,7 +23,7 @@ calcit calcit.cirru js
 yarn vite
 ```
 
-The project is pinned to Calcit 0.14.17 in `deps.cirru`. Pull requests run the
+The project is pinned to Calcit 0.15.3 in `deps.cirru`. Pull requests run the
 full validation and Vite build on Linux; deployment credentials are only
 available to the separate `main` push job.
 
