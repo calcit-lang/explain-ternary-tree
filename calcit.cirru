@@ -3,7 +3,7 @@
   :about "|Machine-generated snapshot. Do not edit directly — changes will be overwritten. Use `calcit query` to inspect and `calcit edit`/`calcit tree` to modify. Run `calcit docs agents --contract` before mutations; use `--full` for first orientation or changed contract digest. Manual edits must follow format and schema conventions, then run `calcit edit format`."
   :package |app
   :entries $ {} $ :default
-    {} (:description |) (:init-fn 'app.main/main!) (:mode :js) (:reload-fn 'app.main/reload!)
+    {} (:description |) (:init-fn 'app.main/main!) (:mode :js) (:reload-fn 'app.main/reload!) (:target :browser)
       :feature-policy $ {}
       :modules $ [] |memof/ |lilac/ |respo-ui.calcit/ |phlox/ |touch-control/
       :type-slots $ {}
@@ -214,7 +214,7 @@
                           s0 $ finger-count $ nth0 inside
                           s1 $ finger-count $ nth1 inside
                           s2 $ finger-count $ nth2 inside
-                          s3 $ finger-count $ nth inside 3
+                          s3 $ finger-count $ &list:nth inside 3
                           p0 $ complex/add base $ []
                             * -1 w-unit $ + s1 $ * 0.5 s0
                             * 1.5 h-unit
@@ -231,7 +231,7 @@
                           comp-finger-node (nth0 inside) p0 level
                           comp-finger-node (nth1 inside) p1 level
                           comp-finger-node (nth2 inside) p2 level
-                          comp-finger-node (nth inside 3) p3 level
+                          comp-finger-node (&list:nth inside 3) p3 level
                           polyline $ {} (:style style-line)
                             :points $ [] base p0
                           polyline $ {} (:style style-line)
@@ -333,32 +333,32 @@
                     + (finger-count left-tree) (finger-count middle-tree) (finger-count right-tree)
                 :node $ case-default (nth1 tree) (raise "|unknown kind of node")
                   :node2 $ let
-                      inside $ nth tree 2
+                      inside $ &list:nth tree 2
                     +
-                      finger-count $ nth inside 0
-                      finger-count $ nth inside 1
+                      finger-count $ &list:nth inside 0
+                      finger-count $ &list:nth inside 1
                   :node3 $ let
-                      inside $ nth tree 2
+                      inside $ &list:nth tree 2
                     +
-                      finger-count $ nth inside 0
-                      finger-count $ nth inside 1
-                      finger-count $ nth inside 2
+                      finger-count $ &list:nth inside 0
+                      finger-count $ &list:nth inside 1
+                      finger-count $ &list:nth inside 2
                 :digit $ let
                     inside $ nth2 tree
                   case-default (nth1 tree) (raise "|unknown kind of digit")
-                    :d1 $ finger-count $ nth inside 0
+                    :d1 $ finger-count $ &list:nth inside 0
                     :d2 $ +
-                      finger-count $ nth inside 0
-                      finger-count $ nth inside 1
+                      finger-count $ &list:nth inside 0
+                      finger-count $ &list:nth inside 1
                     :d3 $ +
-                      finger-count $ nth inside 0
-                      finger-count $ nth inside 1
-                      finger-count $ nth inside 2
+                      finger-count $ &list:nth inside 0
+                      finger-count $ &list:nth inside 1
+                      finger-count $ &list:nth inside 2
                     :d4 $ +
-                      finger-count $ nth inside 0
-                      finger-count $ nth inside 1
-                      finger-count $ nth inside 2
-                      finger-count $ nth inside 3
+                      finger-count $ &list:nth inside 0
+                      finger-count $ &list:nth inside 1
+                      finger-count $ &list:nth inside 2
+                      finger-count $ &list:nth inside 3
               , 1
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Number)
@@ -366,16 +366,16 @@
         'finger-count-left $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn finger-count-left (tree)
             if (list? tree)
-              case-default (first tree) (raise "|unknown kind of tree")
-                :finger-tree $ case-default (nth tree 1) (raise "|unknown kind of finger-tree") (:empty 0)
+              case-default (&list:nth tree 0) (raise "|unknown kind of tree")
+                :finger-tree $ case-default (&list:nth tree 1) (raise "|unknown kind of finger-tree") (:empty 0)
                   :single $ let
-                      inside $ nth tree 2
+                      inside $ &list:nth tree 2
                     finger-count inside
                   :deep $ let
-                      inside $ nth tree 2
-                    +
-                      finger-count $ :left inside
-                      finger-count-left $ :middle inside
+                      inside $ assert-type (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
+                      left-tree $ option:unwrap-or (get inside :left) nil
+                      middle-tree $ option:unwrap-or (get inside :middle) nil
+                    + (finger-count left-tree) (finger-count-left middle-tree)
                 :node $ finger-count tree
                 :digit $ finger-count tree
               , 1
@@ -385,16 +385,16 @@
         'finger-count-right $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn finger-count-right (tree)
             if (list? tree)
-              case-default (first tree) (raise "|unknown kind of tree")
-                :finger-tree $ case-default (nth tree 1) (raise "|unknown kind of finger-tree") (:empty 0)
+              case-default (&list:nth tree 0) (raise "|unknown kind of tree")
+                :finger-tree $ case-default (&list:nth tree 1) (raise "|unknown kind of finger-tree") (:empty 0)
                   :single $ let
-                      inside $ nth tree 2
+                      inside $ &list:nth tree 2
                     finger-count inside
                   :deep $ let
-                      inside $ nth tree 2
-                    +
-                      finger-count $ :right inside
-                      finger-count-right $ :middle inside
+                      inside $ assert-type (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
+                      right-tree $ option:unwrap-or (get inside :right) nil
+                      middle-tree $ option:unwrap-or (get inside :middle) nil
+                    + (finger-count right-tree) (finger-count-right middle-tree)
                 :node $ finger-count tree
                 :digit $ finger-count tree
               , 1
@@ -403,7 +403,7 @@
             :args $ [] 'Dynamic
         'nth0 $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defmacro nth0 (xs)
-            quasiquote $ nth ~xs 0
+            quasiquote $ &list:nth ~xs 0
           :examples $ []
           :schema $ :: 'Macro $ {}
             :capabilities $ #{}
@@ -411,7 +411,7 @@
             :required $ [] 'Syntax
         'nth1 $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defmacro nth1 (xs)
-            quasiquote $ nth ~xs 1
+            quasiquote $ &list:nth ~xs 1
           :examples $ []
           :schema $ :: 'Macro $ {}
             :capabilities $ #{}
@@ -419,7 +419,7 @@
             :required $ [] 'Syntax
         'nth2 $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defmacro nth2 (xs)
-            quasiquote $ nth ~xs 2
+            quasiquote $ &list:nth ~xs 2
           :examples $ []
           :schema $ :: 'Macro $ {}
             :capabilities $ #{}
