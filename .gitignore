@@ -11,3 +11,5 @@ dist/
 .DS_Store
 .pnp.cjs
 .pnp.loader.mjs
+compact.cirru
+package.cirru

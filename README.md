@@ -17,20 +17,24 @@ and fingertree:
 ```bash
 corepack enable
 yarn install --immutable
-caps --strict --ci
+caps --ci
 caps verify --toolchain
 calcit calcit.cirru js
 yarn vite
 ```
 
-The project is pinned to Calcit 0.15.3 in `deps.cirru`. Pull requests run the
-full validation and Vite build on Linux; deployment credentials are only
-available to the separate `main` push job.
+The project is pinned to Calcit/procs 0.27.0 and Yarn 4.18.0. Canonical sources
+are `calcit.cirru` and `deps.cirru`; retired compact/package snapshots are rejected.
+Published modules currently request different js-ffi/Respo versions, so the
+existing workflow uses deterministic ordinary Caps resolution, not strict Caps.
+Pull requests run validation and the Vite build on Linux.
 
-The main-branch deployment requires `rsync_private_key` and a separately
-verified `rsync_known_hosts` Actions secret. The latter must contain the trusted
-OpenSSH host-key line for `tiye.me`; do not populate it from an unauthenticated
-`ssh-keyscan` performed inside the deployment job.
+COS uses `COS_BUCKET`, `COS_SECRET_ID`, and `COS_SECRET_KEY` and the action's own
+public verification, without an additional upload checker. PR previews use
+`calcit-lang/explain-ternary-tree/pr/<number>/<run-id>/`; Vite and COS share the
+same base URL. Missing PR secrets skip upload explicitly, not prove deployment.
+The main-branch server deployment still uses `rsync_private_key` and the pinned
+trusted `.github/ssh_known_hosts`; its original source/destination are unchanged.
 
 ### Workflow
 
