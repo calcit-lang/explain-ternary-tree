@@ -14,13 +14,13 @@
   "devDependencies": {
     "@pixi/core": "7.x",
     "@pixi/filter-drop-shadow": "^5.2.0",
-    "vite": "8.3.0"
+    "vite": "8.3.1"
   },
   "scripts": {
-    "compile": "calcit calcit.cirru js",
-    "build": "vite build",
-    "release": "yarn compile && yarn build",
-    "dev": "vite"
+    "compile": "calcit calcit.cirru",
+    "build": "yarn compile && vite build",
+    "release": "yarn build",
+    "dev": "yarn compile && vite"
   },
   "packageManager": "yarn@4.18.0"
 }
