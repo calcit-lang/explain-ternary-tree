@@ -10,8 +10,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: upload-${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.pull_request.number, github.run_id) || github.ref }}
-  cancel-in-progress: true
+  group: upload-${{ github.repository }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'production' }}
+  cancel-in-progress: false
+  queue: max
 
 jobs:
   test:
@@ -42,6 +43,7 @@ jobs:
 
       - name: Resolve immutable dependencies
         run: |
+          set -euo pipefail
           # Published dependencies request different compatible js-ffi and
           # Respo versions; Caps records the deterministic highest selections.
           caps --ci
@@ -50,12 +52,12 @@ jobs:
 
       - name: Validate Calcit upgrade
         run: |
-          test "$(calcit --version)" = "0.27.0"
+          set -euo pipefail
           test -f calcit.cirru
           test -f deps.cirru
           test ! -e compact.cirru
           test ! -e package.cirru
-          calcit edit format
+          calcit calcit.cirru edit format
           git diff --exit-code -- calcit.cirru
           calcit calcit.cirru --check-only
           calcit calcit.cirru analyze check-public \
@@ -77,7 +79,7 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
-            asset_prefix="${GITHUB_REPOSITORY}/pr/${PR_NUMBER}/${GITHUB_RUN_ID}/"
+            asset_prefix="${GITHUB_REPOSITORY}/pr/${PR_NUMBER}/${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}/"
           elif [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
             asset_prefix="${GITHUB_REPOSITORY}/"
           else
@@ -90,7 +92,7 @@ jobs:
 
       - name: Build web assets with CDN URLs
         run: |
-          yarn compile
+          set -euo pipefail
           yarn build
 
       - name: Check COS credentials
@@ -116,7 +118,7 @@ jobs:
       - name: Upload and verify static assets on COS
         timeout-minutes: 10
         if: steps.cos-credentials.outputs.available == 'true'
-        uses: worktools/cos-upload-action@17e6d213fe9f6772a6090a13c8ba044cd6cbcb09 # v1.1.1
+        uses: worktools/cos-upload-action@06d6027dcca6413c5936e04a9b6e9f0d5ef71ba0 # v1.2.0
         with:
           source-dir: dist
           bucket: ${{ secrets.COS_BUCKET }}
