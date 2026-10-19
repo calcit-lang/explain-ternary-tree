@@ -15,21 +15,21 @@
             ; println |Store store $ :tab store
             let
                 cursor $ []
-                store-map $ unsafe-coerce store $ :: 'Map 'Tag 'Dynamic
-                states $ unsafe-coerce
+                store-map $ decode-map-as store $ :: 'Map 'Tag 'Dynamic
+                states $ decode-map-as
                   option:unwrap-or (get store-map :states) ({})
                   :: 'Map 'Tag 'Dynamic
-                state $ unsafe-coerce
+                state $ decode-map-as
                   option:unwrap-or (get states :data)
                     {} $ :finger? false
                   :: 'Map 'Tag 'Dynamic
-                n $ unsafe-coerce
+                n $ decode-map-as
                   option:unwrap-or (get store-map :n) 1
                   , 'Number
-                finger? $ unsafe-coerce
+                finger? $ decode-map-as
                   option:unwrap-or (get state :finger?) false
                   , 'Bool
-                viewport-height $ unsafe-coerce js/window.innerHeight 'Number
+                viewport-height $ decode-map-as js/window.innerHeight 'Number
               container
                 {} $ :position $ [] 0
                   negate $ * 0.5 viewport-height
@@ -41,28 +41,31 @@
                   :position $ [] 480 10
                   :align-right? false
                   :on-pointertap $ fn (e d!)
-                    reset! *inc-task $ flipped js/setInterval 1000 $ fn () (d! :inc nil)
+                    reset! *inc-task $ flipped js/setInterval 1000 $ fn ()
+                      d! $ :: :inc
                 comp-slider (>> states :c)
                   {} (:unit 0.2) (:min 1) (:max 1000) (:round? true) (:value n)
                     :position $ [] -300 -20
                     :fill $ hslx 200 50 40
                     :color $ hslx 200 0 80
-                    :on-change $ fn (value d!) (d! :n value)
+                    :on-change $ fn (value d!)
+                      d! $ :: :n value
                 comp-button $ {} (:text |Start)
                   :position $ [] 480 10
                   :align-right? false
                   :on-pointertap $ fn (e d!)
-                    reset! *inc-task $ flipped js/setInterval 1000 $ fn () (d! :inc nil)
+                    reset! *inc-task $ flipped js/setInterval 1000 $ fn ()
+                      d! $ :: :inc
                 comp-button $ {}
                   :text $ if finger? |Ternary? |Finger?
                   :position $ [] -100 -20
                   :align-right? false
                   :on-pointertap $ fn (e d!)
-                    d! cursor $ update state :finger? not
+                    d! $ :: :states cursor $ update state :finger? not
                 if finger? (comp-fingertree-demo n) (comp-ternary-demo n)
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic
+            :args $ [] $ :: 'Map 'Tag 'Dynamic
             :features $ #{} :js-ffi
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.comp.container
@@ -247,7 +250,7 @@
                   :style $ {} (:fill |red) (:font-size 10) (:font-family |Hind)
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Dynamic 'Number
+            :args $ [] 'Dynamic (:: 'List 'Number) 'Number
         'comp-fingertree-demo $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-fingertree-demo (size)
             let
@@ -315,8 +318,9 @@
                     [] :finger-tree :deep $ assoc inside :right $ digit-append right-digit x
               raise "|expected finger tree"
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+          :schema $ :: 'Fn $ {}
             :args $ [] (:: 'List 'Dynamic) 'Dynamic
+            :return $ :: 'List 'Dynamic
         'finger-count $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn finger-count (tree)
             if (list? tree)
@@ -440,19 +444,21 @@
       :defs $ {}
         'build-tree-dict $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defmacro build-tree-dict (size)
-            apply-args
-                quote $ {}
-                , size
-              fn (acc n)
-                if (<= n 0) acc $ recur
-                  append acc $ [] n $ let
-                      xs $ distinct $ range n
-                      text $ &format-ternary-tree xs
-                      parsed $ parse-cirru-list text
-                      first-line $ &list:nth parsed 0
-                      tree $ &list:nth first-line 0
-                    quasiquote $ quote $ ~ tree
-                  dec n
+            if (number? size)
+              apply-args
+                  quote $ {}
+                  , size
+                fn (acc n)
+                  if (<= n 0) acc $ recur
+                    append acc $ [] n $ let
+                        xs $ distinct $ range n
+                        text $ &format-ternary-tree xs
+                        parsed $ parse-cirru-list text
+                        first-line $ &list:nth parsed 0
+                        tree $ &list:nth first-line 0
+                      quasiquote $ quote $ ~ tree
+                    dec n
+              raise "|Tree table size must be a number literal"
           :examples $ []
           :schema $ :: 'Macro $ {}
             :capabilities $ #{}
@@ -522,7 +528,7 @@
                     :fill $ hclx 220 90 80
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Dynamic 'Bool 'Number
+            :args $ [] 'Dynamic (:: 'List 'Number) 'Bool 'Number
         'comp-ternary-demo $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-ternary-demo (size)
             let
@@ -540,10 +546,34 @@
           :schema $ :: 'Fn $ {} (:return 'Number)
             :args $ [] 'Dynamic
         'get-vec-tree $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn get-vec-tree (n) (get ternary-tree-dict n)
+          :code $ quote $ defn get-vec-tree (n)
+            .unwrap $ get ternary-tree-dict n
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Dynamic)
             :args $ [] 'Number
+          :tests $ [] $ %{} 'TestEntry (:name |preserves-leaf-count)
+            :code $ quote $ do
+              assert=
+                count-recursive $ get-vec-tree 1
+                , 1
+              assert=
+                count-recursive $ get-vec-tree 2
+                , 2
+              assert=
+                count-recursive $ get-vec-tree 3
+                , 3
+              assert=
+                count-recursive $ get-vec-tree 4
+                , 4
+              assert=
+                count-recursive $ get-vec-tree 10
+                , 10
+              assert=
+                count-recursive $ get-vec-tree 200
+                , 200
+              assert=
+                count-recursive $ get-vec-tree 1000
+                , 1000
         'style-line $ %{} 'CodeEntry (:doc |)
           :code $ quote $ def style-line
             {} (:width 2) (:alpha 1)
@@ -584,7 +614,7 @@
         '*store $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defatom *store schema/store
           :examples $ []
-          :schema $ :: 'Ref 'Dynamic
+          :schema $ :: 'Ref $ :: 'Map 'Tag 'Dynamic
         'FontFaceObserverHost $ %{} 'CodeEntry (:doc |)
           :code $ quote $ deftrait FontFaceObserverHost
             .load $ :: 'Fn $ {}
@@ -604,25 +634,21 @@
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :browser)
           :schema $ :: 'Trait
         'dispatch! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn dispatch! (op op-data)
-            when
-              and dev? $ not= op :states
-              println |dispatch! op op-data
+          :code $ quote $ defn dispatch! (op)
+            when dev? $ println |dispatch! op
             let
-                store-map $ unsafe-coerce @*store $ :: 'Map 'Tag 'Dynamic
-                current-n $ unsafe-coerce
-                  option:unwrap-or (get store-map :n) 0
+                current-n $ decode-map-as
+                  .unwrap-or (get @*store :n) 0
                   , 'Number
               if
-                and (= op :inc) (>= current-n 200)
+                and
+                  = op $ :: :inc
+                  >= current-n 200
                 js/clearInterval @*inc-task
-                let
-                    op-id $ nanoid
-                    op-time $ unsafe-coerce (js/Date.now) 'Number
-                  reset! *store $ updater @*store op op-data op-id op-time
+                reset! *store $ updater @*store op
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
-            :args $ [] 'Tag 'Dynamic
+            :args $ [] 'Enum
             :features $ #{} :js-ffi
         'main! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn main! () (; js/console.log PIXI)
@@ -631,7 +657,7 @@
                 observer $ unsafe-coerce (new FontFaceObserver/default "|Josefin Sans") FontFaceObserverHost
                 font-load $ unsafe-coerce (.!load observer) PromiseHost
               .!then font-load $ fn (event) (render-app!)
-            add-watch *store :change $ fn (store prev) (render-app!)
+            add-watch! *store :change $ fn (store prev) (render-app!)
             render-control!
             start-control-loop! 8 on-control-event
             println "|App Started"
@@ -642,8 +668,8 @@
         'reload! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn reload! ()
             if (nil? build-errors)
-              do (println "|Code updated.") (clear-phlox-caches!) (remove-watch *store :change)
-                add-watch *store :change $ fn (store prev) (render-app!)
+              do (println "|Code updated.") (clear-phlox-caches!) (remove-watch! *store :change)
+                add-watch! *store :change $ fn (store prev) (render-app!)
                 render-app!
                 replace-control-loop! 8 on-control-event
                 hud! |ok~ |Ok
@@ -653,10 +679,10 @@
             :args $ []
             :features $ #{} :js-ffi
         'render-app! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn render-app! (& args)
-            render! (comp-container @*store) dispatch! $ option:unwrap-or (first args) ({})
+          :code $ quote $ defn render-app! ()
+            render! (comp-container @*store) dispatch! $ {}
           :examples $ []
-          :schema $ :: 'Fn $ {} (:rest 'Dynamic) (:return 'Unit)
+          :schema $ :: 'Fn $ {} (:return 'Unit)
             :args $ []
             :features $ #{} :js-ffi
       :ns $ %{} 'NsEntry (:doc |)
@@ -695,18 +721,24 @@
     'app.updater $ %{} 'FileEntry
       :defs $ {} $ 'updater
         %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn updater (store op op-data op-id op-time)
-            case-default op
-              do (println "|unknown op" op op-data) store
-              :n $ assoc store :n op-data
-              :inc $ update store :n inc
-              :states $ let
-                  payload $ assert-type op-data $ :: 'List 'Dynamic
-                update-states store (&list:nth payload 0) (&list:nth payload 1)
-              :hydrate-storage op-data
+          :code $ quote $ defn updater (store op)
+            match op
+              (:n n)
+                assoc store :n $ decode-map-as n 'Number
+              (:inc)
+                update store :n $ fn (n)
+                  inc $ decode-map-as n 'Number
+              (:states cursor data)
+                update-states store
+                  decode-map-as cursor $ :: 'List 'Dynamic
+                  , data
+              (:hydrate-storage data)
+                decode-map-as data $ :: 'Map 'Tag 'Dynamic
+              _ $ do (eprintln "|unknown op" op) store
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Tag 'Dynamic 'String 'Number
+          :schema $ :: 'Fn $ {}
+            :args $ [] (:: 'Map 'Tag 'Dynamic) 'Enum
+            :return $ :: 'Map 'Tag 'Dynamic
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.updater
-          :require $ [] phlox.cursor :refer $ [] update-states
+          :require $ phlox.cursor :refer $ update-states
