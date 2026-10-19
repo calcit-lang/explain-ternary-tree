@@ -60,16 +60,8 @@ jobs:
           calcit calcit.cirru edit format
           git diff --exit-code -- calcit.cirru
           calcit calcit.cirru --check-only
-          calcit calcit.cirru analyze check-public \
-            --ns app.comp.container \
-            --ns app.comp.fingertree \
-            --ns app.comp.ternary-tree \
-            --ns app.config \
-            --ns app.main \
-            --ns app.schema \
-            --ns app.task \
-            --ns app.updater \
-            --summary-only --format json
+          calcit calcit.cirru --check-only --all-defs --format json
+          calcit calcit.cirru test --require-match
 
       - name: Select CDN asset path
         id: asset-path
