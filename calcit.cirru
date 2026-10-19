@@ -44,7 +44,7 @@
                 comp-button $ {} (:text |Start)
                   :position $ [] 480 10
                   :align-right? false
-                  :on-pointertap $ fn (e d!)
+                  :on-pointertap $ fn (e d!) (js/clearInterval @*inc-task)
                     reset! *inc-task $ js/setInterval
                       fn () $ d! $ :: :inc
                       , 1000
