@@ -15,24 +15,28 @@
             ; println |Store store $ :tab store
             let
                 cursor $ []
-                store-map $ unsafe-coerce store $ :: 'Map 'Tag 'Dynamic
-                states $ unsafe-coerce
+                store-map $ decode-map-as store $ :: 'Map 'Tag 'Dynamic
+                states $ decode-map-as
                   option:unwrap-or (get store-map :states) ({})
                   :: 'Map 'Tag 'Dynamic
-                state $ unsafe-coerce
+                state $ decode-map-as
                   option:unwrap-or (get states :data)
                     {} $ :finger? false
                   :: 'Map 'Tag 'Dynamic
-                n $ unsafe-coerce
+                n $ decode-map-as
                   option:unwrap-or (get store-map :n) 1
                   , 'Number
-                finger? $ unsafe-coerce
+                finger? $ decode-map-as
                   option:unwrap-or (get state :finger?) false
                   , 'Bool
-                viewport-height $ unsafe-coerce js/window.innerHeight 'Number
+                viewport-height $ decode-map-as js/window.innerHeight 'Number
               container
                 {} $ :position $ [] 0
-                  negate $ * 0.5 viewport-height
+                  + 80 $ negate $ * 0.5 viewport-height
+                text $ {}
+                  :text $ if finger? "|Finger Tree teaching model" "|Ternary Tree teaching model (not current Calcit internals)"
+                  :position $ [] -300 -55
+                  :style $ {} (:fill |#cccccc) (:font-size 14)
                 comp-button $ {} (:text |Fullscreen)
                   :position $ [] 400 10
                   :align-right? false
@@ -40,29 +44,27 @@
                 comp-button $ {} (:text |Start)
                   :position $ [] 480 10
                   :align-right? false
-                  :on-pointertap $ fn (e d!)
-                    reset! *inc-task $ flipped js/setInterval 1000 $ fn () (d! :inc nil)
+                  :on-pointertap $ fn (e d!) (js/clearInterval @*inc-task)
+                    reset! *inc-task $ js/setInterval
+                      fn () $ d! $ :: :inc
+                      , 1000
                 comp-slider (>> states :c)
                   {} (:unit 0.2) (:min 1) (:max 1000) (:round? true) (:value n)
                     :position $ [] -300 -20
                     :fill $ hslx 200 50 40
                     :color $ hslx 200 0 80
-                    :on-change $ fn (value d!) (d! :n value)
-                comp-button $ {} (:text |Start)
-                  :position $ [] 480 10
-                  :align-right? false
-                  :on-pointertap $ fn (e d!)
-                    reset! *inc-task $ flipped js/setInterval 1000 $ fn () (d! :inc nil)
+                    :on-change $ fn (value d!)
+                      d! $ :: :n value
                 comp-button $ {}
                   :text $ if finger? |Ternary? |Finger?
                   :position $ [] -100 -20
                   :align-right? false
                   :on-pointertap $ fn (e d!)
-                    d! cursor $ update state :finger? not
+                    d! $ :: :states cursor $ update state :finger? not
                 if finger? (comp-fingertree-demo n) (comp-ternary-demo n)
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic
+            :args $ [] $ :: 'Map 'Tag 'Dynamic
             :features $ #{} :js-ffi
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.comp.container
@@ -85,9 +87,9 @@
                 w-unit 8
                 h-unit 32
               if (list? tree)
-                case-default (nth0 tree) (raise "|unknown type")
+                match (nth0 tree)
                   :finger-tree $ container ({})
-                    case-default (nth1 tree) (raise "|unknown finger tree variant")
+                    match (nth1 tree)
                       :empty $ circle $ {} (:position base) (:radius 8)
                         :line-style $ {} (:width 1)
                           :color $ hclx 30 90 80
@@ -124,13 +126,14 @@
                             :points $ [] base middle
                           polyline $ {} (:style style-line)
                             :points $ [] base right
+                      _ $ raise "|unknown finger tree variant"
                     circle $ {} (:position base) (:radius 8)
                       :line-style $ {} (:width 1)
                         :color $ hclx 30 90 80
                         :alpha 1
                       :fill $ hclx 30 90 80
                   :node $ container ({})
-                    case-default (nth1 tree) (raise "|unknown node variant")
+                    match (nth1 tree)
                       :node2 $ let
                           inside $ nth2 tree
                           left $ complex/add base $ [] (* -1 w-unit) (* 1.5 h-unit)
@@ -165,6 +168,7 @@
                             :points $ [] base middle
                           polyline $ {} (:style style-line)
                             :points $ [] base right
+                      _ $ raise "|unknown node variant"
                     rect $ {}
                       :position $ complex/add base $ [] -8 -8
                       :size $ [] 16 16
@@ -173,7 +177,7 @@
                       :fill $ hclx 40 80 60
                   :digit $ let
                       inside $ nth2 tree
-                    case-default (nth1 tree) (raise "|unknown digit variant")
+                    match (nth1 tree)
                       :d1 $ let
                           next $ complex/add base $ [] 0 (* 1.5 h-unit)
                         container ({})
@@ -240,6 +244,8 @@
                             :points $ [] base p2
                           polyline $ {} (:style style-line)
                             :points $ [] base p3
+                      _ $ raise "|unknown digit variant"
+                  _ $ raise "|unknown type"
                 text $ {}
                   :text $ str tree
                   :position $ complex/add base $ [] 0 8
@@ -247,17 +253,16 @@
                   :style $ {} (:fill |red) (:font-size 10) (:font-family |Hind)
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Dynamic 'Number
+            :args $ [] 'Dynamic (:: 'List 'Number) 'Number
         'comp-fingertree-demo $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-fingertree-demo (size)
             let
-                tree $ apply-args
-                    [] :finger-tree :empty nil
-                    , 0
-                  fn (acc n)
-                    if (< n size)
-                      recur (finger-append acc n) (inc n)
-                      , acc
+                tree $ loop
+                    acc $ [] :finger-tree :empty nil
+                    n 0
+                  if (< n size)
+                    recur (finger-append acc n) (inc n)
+                    , acc
               ; js/console.log tree
               comp-finger-node tree ([] -300 20) 0
           :examples $ []
@@ -269,11 +274,12 @@
               = :digit $ &list:nth digits 0
               let
                   inside $ assert-type (&list:nth digits 2) (:: 'List 'Dynamic)
-                case-default (&list:nth digits 1) (raise "|unknown digit varient")
+                match (&list:nth digits 1)
                   :d1 $ [] :digit :d2 $ conj inside x
                   :d2 $ [] :digit :d3 $ conj inside x
                   :d3 $ [] :digit :d4 $ conj inside x
                   :d4 $ raise "|already full, cannot append"
+                  _ $ raise "|unknown digit varient"
               raise "|expected digits"
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Dynamic)
@@ -291,10 +297,10 @@
           :code $ quote $ defn finger-append (tree x)
             if
               = :finger-tree $ &list:nth tree 0
-              case-default (&list:nth tree 1) (raise "|unknown variant of finger tree")
+              match (&list:nth tree 1)
                 :empty $ [] :finger-tree :single x
                 :single $ [] :finger-tree :deep $ {}
-                  :left $ [] :digit :d1 $ [] (nth tree 2)
+                  :left $ [] :digit :d1 $ [] (&list:nth tree 2)
                   :middle $ [] :finger-tree :empty nil
                   :right $ [] :digit :d1 $ [] x
                 :deep $ let
@@ -313,15 +319,34 @@
                         assoc :middle $ finger-append middle-tree $ [] :node :node3 (take digit-internal 3)
                         assoc :right $ [] :digit :d2 $ [] (&list:nth digit-internal 3) x
                     [] :finger-tree :deep $ assoc inside :right $ digit-append right-digit x
+                _ $ raise "|unknown variant of finger tree"
               raise "|expected finger tree"
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+          :schema $ :: 'Fn $ {}
             :args $ [] (:: 'List 'Dynamic) 'Dynamic
+            :return $ :: 'List 'Dynamic
+          :tests $ [] $ %{} 'TestEntry (:name |append-preserves-leaves)
+            :code $ quote $ do
+              assert=
+                finger-append
+                  finger-append ([] :finger-tree :empty nil) 0
+                  , 1
+                [] :finger-tree :deep $ {}
+                  :left $ [] :digit :d1 $ [] 0
+                  :middle $ [] :finger-tree :empty nil
+                  :right $ [] :digit :d1 $ [] 1
+              loop
+                  tree $ [] :finger-tree :empty nil
+                  n 0
+                assert= (finger-count tree) n
+                if (< n 1000)
+                  recur (finger-append tree n) (inc n)
+                  , &unit
         'finger-count $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn finger-count (tree)
             if (list? tree)
-              case-default (nth0 tree) (raise "|unknown kind of tree")
-                :finger-tree $ case-default (nth1 tree) (raise "|unknown kind of finger-tree") (:empty 0)
+              match (nth0 tree)
+                :finger-tree $ match (nth1 tree) (:empty 0)
                   :single $ let
                       inside $ nth2 tree
                     finger-count inside
@@ -331,7 +356,8 @@
                       middle-tree $ option:unwrap-or (get inside :middle) nil
                       right-tree $ option:unwrap-or (get inside :right) nil
                     + (finger-count left-tree) (finger-count middle-tree) (finger-count right-tree)
-                :node $ case-default (nth1 tree) (raise "|unknown kind of node")
+                  _ $ raise "|unknown kind of finger-tree"
+                :node $ match (nth1 tree)
                   :node2 $ let
                       inside $ &list:nth tree 2
                     +
@@ -343,9 +369,10 @@
                       finger-count $ &list:nth inside 0
                       finger-count $ &list:nth inside 1
                       finger-count $ &list:nth inside 2
+                  _ $ raise "|unknown kind of node"
                 :digit $ let
                     inside $ nth2 tree
-                  case-default (nth1 tree) (raise "|unknown kind of digit")
+                  match (nth1 tree)
                     :d1 $ finger-count $ &list:nth inside 0
                     :d2 $ +
                       finger-count $ &list:nth inside 0
@@ -359,6 +386,8 @@
                       finger-count $ &list:nth inside 1
                       finger-count $ &list:nth inside 2
                       finger-count $ &list:nth inside 3
+                    _ $ raise "|unknown kind of digit"
+                _ $ raise "|unknown kind of tree"
               , 1
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Number)
@@ -366,8 +395,8 @@
         'finger-count-left $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn finger-count-left (tree)
             if (list? tree)
-              case-default (&list:nth tree 0) (raise "|unknown kind of tree")
-                :finger-tree $ case-default (&list:nth tree 1) (raise "|unknown kind of finger-tree") (:empty 0)
+              match (&list:nth tree 0)
+                :finger-tree $ match (&list:nth tree 1) (:empty 0)
                   :single $ let
                       inside $ &list:nth tree 2
                     finger-count inside
@@ -376,8 +405,10 @@
                       left-tree $ option:unwrap-or (get inside :left) nil
                       middle-tree $ option:unwrap-or (get inside :middle) nil
                     + (finger-count left-tree) (finger-count-left middle-tree)
+                  _ $ raise "|unknown kind of finger-tree"
                 :node $ finger-count tree
                 :digit $ finger-count tree
+                _ $ raise "|unknown kind of tree"
               , 1
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Number)
@@ -385,8 +416,8 @@
         'finger-count-right $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn finger-count-right (tree)
             if (list? tree)
-              case-default (&list:nth tree 0) (raise "|unknown kind of tree")
-                :finger-tree $ case-default (&list:nth tree 1) (raise "|unknown kind of finger-tree") (:empty 0)
+              match (&list:nth tree 0)
+                :finger-tree $ match (&list:nth tree 1) (:empty 0)
                   :single $ let
                       inside $ &list:nth tree 2
                     finger-count inside
@@ -395,8 +426,10 @@
                       right-tree $ option:unwrap-or (get inside :right) nil
                       middle-tree $ option:unwrap-or (get inside :middle) nil
                     + (finger-count right-tree) (finger-count-right middle-tree)
+                  _ $ raise "|unknown kind of finger-tree"
                 :node $ finger-count tree
                 :digit $ finger-count tree
+                _ $ raise "|unknown kind of tree"
               , 1
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Number)
@@ -438,91 +471,100 @@
             app.comp.ternary-tree :refer $ style-line
     'app.comp.ternary-tree $ %{} 'FileEntry
       :defs $ {}
-        'build-tree-dict $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defmacro build-tree-dict (size)
-            apply-args
-                quote $ {}
-                , size
-              fn (acc n)
-                if (<= n 0) acc $ recur
-                  append acc $ [] n $ let
-                      xs $ distinct $ range n
-                      text $ &format-ternary-tree xs
-                      parsed $ parse-cirru-list text
-                      first-line $ &list:nth parsed 0
-                      tree $ &list:nth first-line 0
-                    quasiquote $ quote $ ~ tree
-                  dec n
+        'Tree $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ def Tree
+            defenum Tree (:leaf 'Number)
+              :branch $ :: 'List 'app.comp.ternary-tree/Tree
           :examples $ []
-          :schema $ :: 'Macro $ {}
-            :capabilities $ #{}
-            :expansion $ :: 'Expr 'Dynamic
-            :required $ [] 'Syntax
+        'build-ternary-tree $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn build-ternary-tree (size offset)
+            cond
+                = size 0
+                Tree :branch $ []
+              (= size 1) (Tree :leaf offset)
+              (<= size 3)
+                Tree :branch $ map (range size)
+                  fn (idx)
+                    Tree :leaf $ + offset idx
+              true $ let
+                  group $ floor $ / size 3
+                  extra $ - size $ * group 3
+                  left-size $ + group $ if (= extra 2) 1 0
+                  middle-size $ + group $ if (= extra 1) 1 0
+                  right-size left-size
+                Tree :branch $ [] (build-ternary-tree left-size offset)
+                  build-ternary-tree middle-size $ + offset left-size
+                  build-ternary-tree right-size $ + offset left-size middle-size
+          :examples $ []
+          :schema $ :: 'Fn $ {} (:return 'app.comp.ternary-tree/Tree)
+            :args $ [] 'Number 'Number
         'comp-node $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-node (tree base center? level)
             let
                 unit 16
                 h-unit 40
-              if (list? tree)
-                case-default (count tree)
+              match tree
+                (:branch children)
+                  match (count children)
+                    1 $ let
+                        next $ complex/add base $ [] 0 h-unit
+                      container ({})
+                        polyline $ {} (:style style-line)
+                          :points $ [] ([] 0 0) next
+                        comp-node (&list:nth children 0) next false level
+                    2 $ let
+                        left-size $ count-recursive $ &list:nth children 0
+                        right-size $ count-recursive $ &list:nth children 1
+                        left $ complex/add base $ [] (* unit -0.5 left-size) h-unit
+                        right $ complex/add base $ [] (* unit 0.5 right-size) h-unit
+                      container ({})
+                        comp-node (&list:nth children 0) left false level
+                        comp-node (&list:nth children 1) right false level
+                        polyline $ {} (:style style-line)
+                          :points $ [] base left
+                        polyline $ {} (:style style-line)
+                          :points $ [] base right
+                    3 $ let
+                        left-size $ count-recursive $ &list:nth children 0
+                        middle-size $ count-recursive $ &list:nth children 1
+                        right-size $ count-recursive $ &list:nth children 2
+                        left $ complex/add base $ []
+                          * unit -0.5 $ pow (+ left-size middle-size) 0.9
+                          , h-unit
+                        middle $ complex/add base $ [] 0
+                          if
+                            and center? $ > middle-size $ pow 3 (- level 1)
+                            *
+                              * 2 $ pow level 1.2
+                              , h-unit
+                            + 16 h-unit
+                        right $ complex/add base $ []
+                          * unit 0.5 $ pow (+ right-size middle-size) 0.9
+                          , h-unit
+                      container ({})
+                        comp-node (&list:nth children 0) left false $ inc level
+                        comp-node (&list:nth children 1) middle center? $ inc level
+                        comp-node (&list:nth children 2) right false $ inc level
+                        polyline $ {} (:style style-line)
+                          :points $ [] base left
+                        polyline $ {} (:style style-line)
+                          :points $ [] base middle
+                        polyline $ {} (:style style-line)
+                          :points $ [] base right
+                    _ $ text $ {}
+                      :text $ str-spaced |unknown: children
+                      :position base
+                      :style $ {} (:fill |red) (:font-size 14) (:font-family |Hind)
+                (:leaf value)
                   text $ {}
-                    :text $ str-spaced |unknown: tree
-                    :position base
-                    :style $ {} (:fill |red) (:font-size 14) (:font-family |Hind)
-                  1 $ let
-                      next $ complex/add base $ [] 0 h-unit
-                    container ({})
-                      polyline $ {} (:style style-line)
-                        :points $ [] ([] 0 0) next
-                      comp-node (first tree) next false level
-                  2 $ let
-                      left-size $ count-recursive $ nth tree 0
-                      right-size $ count-recursive $ nth tree 1
-                      left $ complex/add base $ [] (* unit -0.5 left-size) h-unit
-                      right $ complex/add base $ [] (* unit 0.5 right-size) h-unit
-                    container ({})
-                      comp-node (nth tree 0) left false level
-                      comp-node (nth tree 1) right false level
-                      polyline $ {} (:style style-line)
-                        :points $ [] base left
-                      polyline $ {} (:style style-line)
-                        :points $ [] base right
-                  3 $ let
-                      left-size $ count-recursive $ nth tree 0
-                      middle-size $ count-recursive $ nth tree 1
-                      right-size $ count-recursive $ nth tree 2
-                      left $ complex/add base $ []
-                        * unit -0.5 $ pow (+ left-size middle-size) 0.9
-                        , h-unit
-                      middle $ complex/add base $ [] 0
-                        if
-                          and center? $ > middle-size $ pow 3 (- level 1)
-                          *
-                            * 2 $ pow level 1.2
-                            , h-unit
-                          + 16 h-unit
-                      right $ complex/add base $ []
-                        * unit 0.5 $ pow (+ right-size middle-size) 0.9
-                        , h-unit
-                    container ({})
-                      comp-node (nth tree 0) left false $ inc level
-                      comp-node (nth tree 1) middle center? $ inc level
-                      comp-node (nth tree 2) right false $ inc level
-                      polyline $ {} (:style style-line)
-                        :points $ [] base left
-                      polyline $ {} (:style style-line)
-                        :points $ [] base middle
-                      polyline $ {} (:style style-line)
-                        :points $ [] base right
-                text $ {}
-                  :text $ str tree
-                  :position $ complex/add base $ [] 0 6
-                  :align :center
-                  :style $ {} (:font-size 13) (:font-family |Hind)
-                    :fill $ hclx 220 90 80
+                    :text $ str value
+                    :position $ complex/add base $ [] 0 6
+                    :align :center
+                    :style $ {} (:font-size 13) (:font-family |Hind)
+                      :fill $ hclx 220 90 80
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Dynamic 'Bool 'Number
+            :args $ [] 'app.comp.ternary-tree/Tree (:: 'List 'Number) 'Bool 'Number
         'comp-ternary-demo $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-ternary-demo (size)
             let
@@ -533,25 +575,52 @@
             :args $ [] 'Number
         'count-recursive $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn count-recursive (tree)
-            if (list? tree)
-              foldl (map tree count-recursive) 0 &+
-              , 1
+            match tree
+              (:leaf value) 1
+              (:branch children)
+                foldl (map children count-recursive) 0 &+
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'Dynamic
+            :args $ [] 'app.comp.ternary-tree/Tree
         'get-vec-tree $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn get-vec-tree (n) (get ternary-tree-dict n)
+          :code $ quote $ defn get-vec-tree (n) (build-ternary-tree n 0)
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+          :schema $ :: 'Fn $ {} (:return 'app.comp.ternary-tree/Tree)
             :args $ [] 'Number
+          :tests $ [] $ %{} 'TestEntry (:name |preserves-leaf-count)
+            :code $ quote $ do
+              assert=
+                count-recursive $ get-vec-tree 0
+                , 0
+              assert=
+                count-recursive $ get-vec-tree 1
+                , 1
+              assert=
+                count-recursive $ get-vec-tree 2
+                , 2
+              assert=
+                count-recursive $ get-vec-tree 3
+                , 3
+              assert=
+                count-recursive $ get-vec-tree 4
+                , 4
+              assert=
+                count-recursive $ get-vec-tree 10
+                , 10
+              assert=
+                count-recursive $ get-vec-tree 200
+                , 200
+              assert=
+                count-recursive $ get-vec-tree 1000
+                , 1000
+              assert= (get-vec-tree 4)
+                Tree :branch $ [] (Tree :leaf 0)
+                  Tree :branch $ [] (Tree :leaf 1) (Tree :leaf 2)
+                  Tree :leaf 3
         'style-line $ %{} 'CodeEntry (:doc |)
           :code $ quote $ def style-line
             {} (:width 2) (:alpha 1)
               :color $ hclx 220 100 60
-          :examples $ []
-          :schema $ :: 'Dynamic
-        'ternary-tree-dict $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ def ternary-tree-dict (build-tree-dict 1000)
           :examples $ []
           :schema $ :: 'Dynamic
       :ns $ %{} 'NsEntry (:doc |)
@@ -582,9 +651,9 @@
     'app.main $ %{} 'FileEntry
       :defs $ {}
         '*store $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defatom *store schema/store
+          :code $ quote $ defref *store schema/store
           :examples $ []
-          :schema $ :: 'Ref 'Dynamic
+          :schema $ :: 'Ref $ :: 'Map 'Tag 'Dynamic
         'FontFaceObserverHost $ %{} 'CodeEntry (:doc |)
           :code $ quote $ deftrait FontFaceObserverHost
             .load $ :: 'Fn $ {}
@@ -604,25 +673,21 @@
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :browser)
           :schema $ :: 'Trait
         'dispatch! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn dispatch! (op op-data)
-            when
-              and dev? $ not= op :states
-              println |dispatch! op op-data
+          :code $ quote $ defn dispatch! (op)
+            when dev? $ println |dispatch! op
             let
-                store-map $ unsafe-coerce @*store $ :: 'Map 'Tag 'Dynamic
-                current-n $ unsafe-coerce
-                  option:unwrap-or (get store-map :n) 0
+                current-n $ decode-map-as
+                  .unwrap-or (get @*store :n) 0
                   , 'Number
               if
-                and (= op :inc) (>= current-n 200)
+                and
+                  = op $ :: :inc
+                  >= current-n 200
                 js/clearInterval @*inc-task
-                let
-                    op-id $ nanoid
-                    op-time $ unsafe-coerce (js/Date.now) 'Number
-                  reset! *store $ updater @*store op op-data op-id op-time
+                reset! *store $ updater @*store op
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
-            :args $ [] 'Tag 'Dynamic
+            :args $ [] 'Enum
             :features $ #{} :js-ffi
         'main! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn main! () (; js/console.log PIXI)
@@ -631,7 +696,7 @@
                 observer $ unsafe-coerce (new FontFaceObserver/default "|Josefin Sans") FontFaceObserverHost
                 font-load $ unsafe-coerce (.!load observer) PromiseHost
               .!then font-load $ fn (event) (render-app!)
-            add-watch *store :change $ fn (store prev) (render-app!)
+            add-watch! *store :change $ fn (store prev) (render-app!)
             render-control!
             start-control-loop! 8 on-control-event
             println "|App Started"
@@ -642,8 +707,8 @@
         'reload! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn reload! ()
             if (nil? build-errors)
-              do (println "|Code updated.") (clear-phlox-caches!) (remove-watch *store :change)
-                add-watch *store :change $ fn (store prev) (render-app!)
+              do (println "|Code updated.") (clear-phlox-caches!) (remove-watch! *store :change)
+                add-watch! *store :change $ fn (store prev) (render-app!)
                 render-app!
                 replace-control-loop! 8 on-control-event
                 hud! |ok~ |Ok
@@ -653,10 +718,10 @@
             :args $ []
             :features $ #{} :js-ffi
         'render-app! $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn render-app! (& args)
-            render! (comp-container @*store) dispatch! $ option:unwrap-or (first args) ({})
+          :code $ quote $ defn render-app! ()
+            render! (comp-container @*store) dispatch! $ {}
           :examples $ []
-          :schema $ :: 'Fn $ {} (:rest 'Dynamic) (:return 'Unit)
+          :schema $ :: 'Fn $ {} (:return 'Unit)
             :args $ []
             :features $ #{} :js-ffi
       :ns $ %{} 'NsEntry (:doc |)
@@ -687,7 +752,7 @@
     'app.task $ %{} 'FileEntry
       :defs $ {} $ '*inc-task
         %{} 'CodeEntry (:doc |)
-          :code $ quote $ defatom *inc-task 0
+          :code $ quote $ defref *inc-task 0
           :examples $ []
           :schema $ :: 'Ref 'Dynamic
       :ns $ %{} 'NsEntry (:doc |)
@@ -695,18 +760,41 @@
     'app.updater $ %{} 'FileEntry
       :defs $ {} $ 'updater
         %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn updater (store op op-data op-id op-time)
-            case-default op
-              do (println "|unknown op" op op-data) store
-              :n $ assoc store :n op-data
-              :inc $ update store :n inc
-              :states $ let
-                  payload $ assert-type op-data $ :: 'List 'Dynamic
-                update-states store (&list:nth payload 0) (&list:nth payload 1)
-              :hydrate-storage op-data
+          :code $ quote $ defn updater (store op)
+            match op
+              (:n n)
+                assoc store :n $ decode-map-as n 'Number
+              (:inc)
+                update store :n $ fn (n)
+                  inc $ decode-map-as n 'Number
+              (:states cursor data)
+                update-states store
+                  decode-map-as cursor $ :: 'List 'Dynamic
+                  , data
+              (:hydrate-storage data)
+                decode-map-as data $ :: 'Map 'Tag 'Dynamic
+              _ $ do (eprintln "|unknown op" op) store
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] 'Dynamic 'Tag 'Dynamic 'String 'Number
+          :schema $ :: 'Fn $ {}
+            :args $ [] (:: 'Map 'Tag 'Dynamic) 'Enum
+            :return $ :: 'Map 'Tag 'Dynamic
+          :tests $ [] $ %{} 'TestEntry (:name |enum-count-and-cursor)
+            :code $ quote $ let
+                store $ {} (:n 1)
+                  :states $ {} $ :cursor ([])
+                incremented $ updater store $ :: :inc
+                selected $ updater incremented $ :: :n 10
+                state $ {} $ :finger? true
+                updated $ updater selected $ :: :states ([]) state
+              assert=
+                .unwrap $ get incremented :n
+                , 2
+              assert=
+                .unwrap $ get selected :n
+                , 10
+              assert=
+                .unwrap $ get-in updated $ [] :states :data
+                , state
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.updater
-          :require $ [] phlox.cursor :refer $ [] update-states
+          :require $ phlox.cursor :refer $ update-states
