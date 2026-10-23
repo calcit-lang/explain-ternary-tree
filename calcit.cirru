@@ -714,6 +714,7 @@
                 replace-control-loop! 8 on-control-event
                 hud! |ok~ |Ok
               hud! |error build-errors
+            , &unit
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
             :args $ []
