@@ -54,6 +54,8 @@ v1.2.0 validates HTML references and verifies public uploads, without an additio
 checker. PR previews use
 `calcit-lang/explain-ternary-tree/pr/<number>/<run-id>/<attempt>/`; Vite and COS share the
 same base URL. Missing PR secrets skip upload explicitly, not prove deployment.
+The credential-bearing upload action retains its original full commit pin,
+labeled v1.2.0; Calcit modules use exact formal version tags.
 Uploads use 1 MiB parts, two threads and one file retry, with a ten-minute
 step limit. A failed upload or public verification stops deployment.
 Runs queue per PR and separately for production, without cancelling uploads.
