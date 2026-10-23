@@ -685,7 +685,7 @@
                   >= current-n 200
                 js/clearInterval @*inc-task
                 reset! *store $ updater @*store op
-            unit
+            , &unit
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
             :args $ [] 'Enum
