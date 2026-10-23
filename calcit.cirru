@@ -135,7 +135,7 @@
                   :node $ container ({})
                     match (nth1 tree)
                       :node2 $ let
-                          inside $ nth2 tree
+                          inside $ decode-map-as (nth2 tree) (:: 'List 'Dynamic)
                           left $ complex/add base $ [] (* -1 w-unit) (* 1.5 h-unit)
                           right $ complex/add base $ [] (* 1 w-unit) (* 1.5 h-unit)
                         container ({})
@@ -146,7 +146,7 @@
                           polyline $ {} (:style style-line)
                             :points $ [] base right
                       :node3 $ let
-                          inside $ nth2 tree
+                          inside $ decode-map-as (nth2 tree) (:: 'List 'Dynamic)
                           size-left $ finger-count $ nth0 inside
                           size-middle $ finger-count $ nth1 inside
                           size-right $ finger-count $ nth2 inside
@@ -176,7 +176,7 @@
                         :color $ hclx 40 80 60
                       :fill $ hclx 40 80 60
                   :digit $ let
-                      inside $ nth2 tree
+                      inside $ decode-map-as (nth2 tree) (:: 'List 'Dynamic)
                     match (nth1 tree)
                       :d1 $ let
                           next $ complex/add base $ [] 0 (* 1.5 h-unit)
@@ -359,19 +359,19 @@
                   _ $ raise "|unknown kind of finger-tree"
                 :node $ match (nth1 tree)
                   :node2 $ let
-                      inside $ &list:nth tree 2
+                      inside $ decode-map-as (&list:nth tree 2) (:: 'List 'Dynamic)
                     +
                       finger-count $ &list:nth inside 0
                       finger-count $ &list:nth inside 1
                   :node3 $ let
-                      inside $ &list:nth tree 2
+                      inside $ decode-map-as (&list:nth tree 2) (:: 'List 'Dynamic)
                     +
                       finger-count $ &list:nth inside 0
                       finger-count $ &list:nth inside 1
                       finger-count $ &list:nth inside 2
                   _ $ raise "|unknown kind of node"
                 :digit $ let
-                    inside $ nth2 tree
+                    inside $ decode-map-as (nth2 tree) (:: 'List 'Dynamic)
                   match (nth1 tree)
                     :d1 $ finger-count $ &list:nth inside 0
                     :d2 $ +

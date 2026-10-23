@@ -41,8 +41,8 @@ This project pins formal Calcit/procs 0.30.1 and Yarn 4.18.0, with released
 Phlox 0.7.16, UI 0.8.0, Touch Control 0.0.32 and Memof 0.0.40.
 The 17 internal Option helper calls now use public `.unwrap-or` methods;
 the educational tree algorithms, defaults and three original regressions are retained.
-Finger Tree's nine open List/Map boundaries now use checked decoding rather than
-unproven assertions; malformed internal values fail at those boundaries.
+Finger Tree's nine unproven List/Map assertions and six unchecked child-list
+boundaries now use checked decoding; malformed internal values fail at those boundaries.
 Canonical sources
 are `calcit.cirru` and `deps.cirru`; retired compact/package snapshots are rejected.
 The released module graph aligns Respo/JS-FFI versions, so CI now uses
