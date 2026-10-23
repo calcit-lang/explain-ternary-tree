@@ -59,7 +59,7 @@ jobs:
           git diff --exit-code -- calcit.cirru
           calcit calcit.cirru --check-only --all-defs --format json
           if ! calcit calcit.cirru fix --workflow strict --verify --format json > /tmp/explain-ternary-strict.json; then
-            jq '{workflow: .data.workflow, diagnostics}' /tmp/explain-ternary-strict.json
+            jq '{status: .data.workflow.status, diagnostics: [.diagnostics[] | {code, definition, message}]}' /tmp/explain-ternary-strict.json
             exit 1
           fi
           jq -e '.data.workflow.status == "passed" and (.diagnostics | length == 0)' /tmp/explain-ternary-strict.json

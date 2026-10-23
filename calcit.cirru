@@ -102,7 +102,7 @@
                             :points $ [] base next
                           comp-finger-node (nth2 tree) next level
                       :deep $ let
-                          inside $ assert-type (nth2 tree) (:: 'Map 'Tag 'Dynamic)
+                          inside $ decode-map-as (nth2 tree) (:: 'Map 'Tag 'Dynamic)
                           left-tree $ .unwrap-or (get inside :left) nil
                           middle-tree $ .unwrap-or (get inside :middle) nil
                           right-tree $ .unwrap-or (get inside :right) nil
@@ -273,7 +273,7 @@
             if
               = :digit $ &list:nth digits 0
               let
-                  inside $ assert-type (&list:nth digits 2) (:: 'List 'Dynamic)
+                  inside $ decode-map-as (&list:nth digits 2) (:: 'List 'Dynamic)
                 match (&list:nth digits 1)
                   :d1 $ [] :digit :d2 $ conj inside x
                   :d2 $ [] :digit :d3 $ conj inside x
@@ -304,17 +304,17 @@
                   :middle $ [] :finger-tree :empty nil
                   :right $ [] :digit :d1 $ [] x
                 :deep $ let
-                    inside $ assert-type (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
-                    right-digit $ assert-type
+                    inside $ decode-map-as (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
+                    right-digit $ decode-map-as
                       .unwrap-or (get inside :right)
                         [] :digit :d1 $ []
                       :: 'List 'Dynamic
-                    middle-tree $ assert-type
+                    middle-tree $ decode-map-as
                       .unwrap-or (get inside :middle) ([] :finger-tree :empty nil)
                       :: 'List 'Dynamic
                   if (digit-full? right-digit)
                     let
-                        digit-internal $ assert-type (&list:nth right-digit 2) (:: 'List 'Dynamic)
+                        digit-internal $ decode-map-as (&list:nth right-digit 2) (:: 'List 'Dynamic)
                       [] :finger-tree :deep $ -> inside
                         assoc :middle $ finger-append middle-tree $ [] :node :node3 (take digit-internal 3)
                         assoc :right $ [] :digit :d2 $ [] (&list:nth digit-internal 3) x
@@ -351,7 +351,7 @@
                       inside $ nth2 tree
                     finger-count inside
                   :deep $ let
-                      inside $ assert-type (nth2 tree) (:: 'Map 'Tag 'Dynamic)
+                      inside $ decode-map-as (nth2 tree) (:: 'Map 'Tag 'Dynamic)
                       left-tree $ .unwrap-or (get inside :left) nil
                       middle-tree $ .unwrap-or (get inside :middle) nil
                       right-tree $ .unwrap-or (get inside :right) nil
@@ -401,7 +401,7 @@
                       inside $ &list:nth tree 2
                     finger-count inside
                   :deep $ let
-                      inside $ assert-type (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
+                      inside $ decode-map-as (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
                       left-tree $ .unwrap-or (get inside :left) nil
                       middle-tree $ .unwrap-or (get inside :middle) nil
                     + (finger-count left-tree) (finger-count-left middle-tree)
@@ -422,7 +422,7 @@
                       inside $ &list:nth tree 2
                     finger-count inside
                   :deep $ let
-                      inside $ assert-type (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
+                      inside $ decode-map-as (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
                       right-tree $ .unwrap-or (get inside :right) nil
                       middle-tree $ .unwrap-or (get inside :middle) nil
                     + (finger-count right-tree) (finger-count-right middle-tree)
@@ -685,6 +685,7 @@
                   >= current-n 200
                 js/clearInterval @*inc-task
                 reset! *store $ updater @*store op
+            unit
           :examples $ []
           :schema $ :: 'Fn $ {} (:return 'Unit)
             :args $ [] 'Enum
