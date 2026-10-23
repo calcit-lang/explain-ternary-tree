@@ -17,5 +17,5 @@
     quote decode-map-as
   [] |tree |replace |app.comp.fingertree/finger-count-right |--path |@3.2.2.1.4.1.1.0.1.0 |--input-format |cirru |--code
     quote decode-map-as
-  [] |tree |insert |app.main/dispatch! |--path |@ |--at |append-child |--input-format |cirru |--code
+  [] |tree |insert |app.main/dispatch! |--path |@4 |--at |after |--input-format |cirru |--code
     quote $ unit
