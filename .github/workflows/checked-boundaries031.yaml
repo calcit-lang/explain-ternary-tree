@@ -1,0 +1,37 @@
+name: Temporary formal checked-boundary migration
+on:
+  pull_request:
+    paths:
+      - .github/workflows/checked-boundaries031.yaml
+permissions:
+  contents: read
+jobs:
+  migrate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: calcit-lang/setup-calcit@v1.5.0
+        with:
+          tools: calcit
+          deps-file: deps.cirru
+      - name: Correct the explicit Unit value
+        run: |
+          set -euo pipefail
+          out=.calcit/checked-boundaries031
+          mkdir -p "$out"
+          git hash-object calcit.cirru > "$out/before-blob.txt"
+          operations='[["tree","replace","app.main/dispatch!","--path","@5","--input-format","cirru","--code","quote &unit"]]'
+          calcit edit transaction --code "$operations" --dry-run --format json > "$out/preview.json"
+          revision="$(jq -er '.scoped_revision' "$out/preview.json")"
+          calcit edit transaction --code "$operations" --expect-revision "$revision" --format json > "$out/applied.json"
+          calcit analyze program-diff HEAD --format json > "$out/program-diff.json"
+          cp calcit.cirru "$out/calcit.cirru"
+      - uses: actions/upload-artifact@v7.0.0
+        with:
+          name: explain-ternary-checked-source
+          path: .calcit/checked-boundaries031/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
