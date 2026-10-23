@@ -37,12 +37,14 @@ yarn dev
 compiles initially and starts Vite; run `calcit calcit.cirru -w` in another
 terminal for live Calcit edits.
 
-This migration candidate pins Calcit/procs 0.30.1-alpha.5 and Yarn 4.18.0.
-The stable 0.30.1 release had no downloadable assets at the last verification;
-do not treat this candidate as stable-release acceptance. Canonical sources
+This project pins formal Calcit/procs 0.30.1 and Yarn 4.18.0, with released
+Phlox 0.7.16, UI 0.8.0, Touch Control 0.0.32 and Memof 0.0.40.
+The 17 internal Option helper calls now use public `.unwrap-or` methods;
+the educational tree algorithms, defaults and three original regressions are retained.
+Canonical sources
 are `calcit.cirru` and `deps.cirru`; retired compact/package snapshots are rejected.
-Published modules currently request different js-ffi/Respo versions, so the
-existing workflow uses deterministic ordinary Caps resolution, not strict Caps.
+The released module graph aligns Respo/JS-FFI versions, so CI now uses
+`caps --strict --ci` rather than selecting among conflicting versions.
 Pull requests run validation and the Vite build on Linux.
 
 COS uses `COS_BUCKET`, `COS_SECRET_ID`, and `COS_SECRET_KEY`; released action
@@ -61,7 +63,7 @@ trusted `.github/ssh_known_hosts`; its original source/destination are unchanged
 GitHub Actions validates immutable Calcit/module/JavaScript dependencies,
 canonical Snapshot formatting, preprocessing, JavaScript generation, and the
 Vite production build.
-Strict entry and all-definition checks are retained; duplicate type-debt diagnostic
+All-definition checks and the complete strict workflow are retained; duplicate type-debt diagnostic
 reports are not part of the deployment workflow.
 
 Run `calcit test --require-match` for the definition-attached business regressions.

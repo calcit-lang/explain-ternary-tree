@@ -17,17 +17,17 @@
                 cursor $ []
                 store-map $ decode-map-as store $ :: 'Map 'Tag 'Dynamic
                 states $ decode-map-as
-                  option:unwrap-or (get store-map :states) ({})
+                  .unwrap-or (get store-map :states) ({})
                   :: 'Map 'Tag 'Dynamic
                 state $ decode-map-as
-                  option:unwrap-or (get states :data)
+                  .unwrap-or (get states :data)
                     {} $ :finger? false
                   :: 'Map 'Tag 'Dynamic
                 n $ decode-map-as
-                  option:unwrap-or (get store-map :n) 1
+                  .unwrap-or (get store-map :n) 1
                   , 'Number
                 finger? $ decode-map-as
-                  option:unwrap-or (get state :finger?) false
+                  .unwrap-or (get state :finger?) false
                   , 'Bool
                 viewport-height $ decode-map-as js/window.innerHeight 'Number
               container
@@ -103,9 +103,9 @@
                           comp-finger-node (nth2 tree) next level
                       :deep $ let
                           inside $ assert-type (nth2 tree) (:: 'Map 'Tag 'Dynamic)
-                          left-tree $ option:unwrap-or (get inside :left) nil
-                          middle-tree $ option:unwrap-or (get inside :middle) nil
-                          right-tree $ option:unwrap-or (get inside :right) nil
+                          left-tree $ .unwrap-or (get inside :left) nil
+                          middle-tree $ .unwrap-or (get inside :middle) nil
+                          right-tree $ .unwrap-or (get inside :right) nil
                           size-left $ finger-count left-tree
                           size-right $ finger-count right-tree
                           size-middle $ finger-count middle-tree
@@ -306,11 +306,11 @@
                 :deep $ let
                     inside $ assert-type (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
                     right-digit $ assert-type
-                      option:unwrap-or (get inside :right)
+                      .unwrap-or (get inside :right)
                         [] :digit :d1 $ []
                       :: 'List 'Dynamic
                     middle-tree $ assert-type
-                      option:unwrap-or (get inside :middle) ([] :finger-tree :empty nil)
+                      .unwrap-or (get inside :middle) ([] :finger-tree :empty nil)
                       :: 'List 'Dynamic
                   if (digit-full? right-digit)
                     let
@@ -352,9 +352,9 @@
                     finger-count inside
                   :deep $ let
                       inside $ assert-type (nth2 tree) (:: 'Map 'Tag 'Dynamic)
-                      left-tree $ option:unwrap-or (get inside :left) nil
-                      middle-tree $ option:unwrap-or (get inside :middle) nil
-                      right-tree $ option:unwrap-or (get inside :right) nil
+                      left-tree $ .unwrap-or (get inside :left) nil
+                      middle-tree $ .unwrap-or (get inside :middle) nil
+                      right-tree $ .unwrap-or (get inside :right) nil
                     + (finger-count left-tree) (finger-count middle-tree) (finger-count right-tree)
                   _ $ raise "|unknown kind of finger-tree"
                 :node $ match (nth1 tree)
@@ -402,8 +402,8 @@
                     finger-count inside
                   :deep $ let
                       inside $ assert-type (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
-                      left-tree $ option:unwrap-or (get inside :left) nil
-                      middle-tree $ option:unwrap-or (get inside :middle) nil
+                      left-tree $ .unwrap-or (get inside :left) nil
+                      middle-tree $ .unwrap-or (get inside :middle) nil
                     + (finger-count left-tree) (finger-count-left middle-tree)
                   _ $ raise "|unknown kind of finger-tree"
                 :node $ finger-count tree
@@ -423,8 +423,8 @@
                     finger-count inside
                   :deep $ let
                       inside $ assert-type (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
-                      right-tree $ option:unwrap-or (get inside :right) nil
-                      middle-tree $ option:unwrap-or (get inside :middle) nil
+                      right-tree $ .unwrap-or (get inside :right) nil
+                      middle-tree $ .unwrap-or (get inside :middle) nil
                     + (finger-count right-tree) (finger-count-right middle-tree)
                   _ $ raise "|unknown kind of finger-tree"
                 :node $ finger-count tree
@@ -638,7 +638,7 @@
       :defs $ {}
         'dev? $ %{} 'CodeEntry (:doc |)
           :code $ quote $ def dev?
-            = |dev $ option:unwrap-or (get-env |mode) |release
+            = |dev $ .unwrap-or (get-env |mode) |release
           :examples $ []
           :schema $ :: 'Bool
         'site $ %{} 'CodeEntry (:doc |)
