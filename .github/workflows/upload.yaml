@@ -19,12 +19,12 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        uses: actions/setup-node@v6.5.0
         with:
           node-version: 24
           package-manager-cache: false
@@ -36,7 +36,7 @@ jobs:
           yarn --version
 
       - name: Set up Calcit and Caps
-        uses: calcit-lang/setup-calcit@ca701be5a471759e442aa053cd100720bbe1f09f # v1.5.0
+        uses: calcit-lang/setup-calcit@v1.5.0
         with:
           tools: calcit,caps
           caps-version: "0.1.1"
@@ -44,9 +44,7 @@ jobs:
       - name: Resolve immutable dependencies
         run: |
           set -euo pipefail
-          # Published dependencies request different compatible js-ffi and
-          # Respo versions; Caps records the deterministic highest selections.
-          caps --ci
+          caps --strict --ci
           yarn install --immutable
           caps verify --toolchain
 
@@ -59,8 +57,12 @@ jobs:
           test ! -e package.cirru
           calcit calcit.cirru edit format
           git diff --exit-code -- calcit.cirru
-          calcit calcit.cirru --check-only
           calcit calcit.cirru --check-only --all-defs --format json
+          if ! calcit calcit.cirru fix --workflow strict --verify --format json > /tmp/explain-ternary-strict.json; then
+            jq '{status: .data.workflow.status, diagnostics: [.diagnostics[] | {code, definition, message}]}' /tmp/explain-ternary-strict.json
+            exit 1
+          fi
+          jq -e '.data.workflow.status == "passed" and (.diagnostics | length == 0)' /tmp/explain-ternary-strict.json
           calcit calcit.cirru test --require-match
 
       - name: Select CDN asset path
@@ -86,6 +88,15 @@ jobs:
         run: |
           set -euo pipefail
           yarn build
+
+      - name: Retain tested preview
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: explain-ternary-preview
+          path: dist/
+          retention-days: 7
+          if-no-files-found: error
 
       - name: Check COS credentials
         id: cos-credentials
