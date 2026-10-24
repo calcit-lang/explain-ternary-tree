@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - prepare/explain-ternary-types031
   pull_request: {}
 
 permissions:
@@ -48,6 +49,9 @@ jobs:
           yarn install --immutable
           caps verify --toolchain
 
+      - name: Prepare source using official Calcit
+        run: node prepare-source.mjs
+
       - name: Validate Calcit upgrade
         run: |
           set -euo pipefail
@@ -56,7 +60,7 @@ jobs:
           test ! -e compact.cirru
           test ! -e package.cirru
           calcit calcit.cirru edit format
-          git diff --exit-code -- calcit.cirru
+          test "$(git hash-object calcit.cirru)" = "$(cat acceptance/snapshot-blob.txt)"
           calcit calcit.cirru --check-only --all-defs --format json
           if ! calcit calcit.cirru fix --workflow strict --verify --format json > /tmp/explain-ternary-strict.json; then
             jq '{status: .data.workflow.status, diagnostics: [.diagnostics[] | {code, definition, message}]}' /tmp/explain-ternary-strict.json
@@ -98,6 +102,18 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+      - name: Preserve official source preparation
+        if: always()
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: explain-ternary-source-prepared
+          path: |
+            calcit.cirru
+            acceptance
+            dist
+          retention-days: 3
+          if-no-files-found: error
+
       - name: Check COS credentials
         id: cos-credentials
         if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
@@ -120,7 +136,7 @@ jobs:
 
       - name: Upload and verify static assets on COS
         timeout-minutes: 10
-        if: steps.cos-credentials.outputs.available == 'true'
+        if: steps.cos-credentials.outputs.available == 'true' && (github.ref == 'refs/heads/main' || github.event_name == 'pull_request')
         uses: worktools/cos-upload-action@06d6027dcca6413c5936e04a9b6e9f0d5ef71ba0 # v1.2.0
         with:
           source-dir: dist
