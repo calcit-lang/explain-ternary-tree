@@ -56,7 +56,7 @@ jobs:
           test ! -e compact.cirru
           test ! -e package.cirru
           calcit calcit.cirru edit format
-          git diff --exit-code -- calcit.cirru
+          git diff --quiet --exit-code -- calcit.cirru
           calcit calcit.cirru --check-only --all-defs --format json
           if ! calcit calcit.cirru fix --workflow strict --verify --format json > /tmp/explain-ternary-strict.json; then
             jq '{status: .data.workflow.status, diagnostics: [.diagnostics[] | {code, definition, message}]}' /tmp/explain-ternary-strict.json

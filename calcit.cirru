@@ -63,7 +63,7 @@
                     d! $ :: :states cursor $ update state :finger? not
                 if finger? (comp-fingertree-demo n) (comp-ternary-demo n)
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+          :schema $ :: 'Fn $ {} (:return 'phlox.schema/PhloxElement)
             :args $ [] $ :: 'Map 'Tag 'Dynamic
             :features $ #{} :js-ffi
       :ns $ %{} 'NsEntry (:doc |)
@@ -252,7 +252,7 @@
                   :align :center
                   :style $ {} (:fill |red) (:font-size 10) (:font-family |Hind)
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+          :schema $ :: 'Fn $ {} (:return 'phlox.schema/PhloxElement)
             :args $ [] 'Dynamic (:: 'List 'Number) 'Number
         'comp-fingertree-demo $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-fingertree-demo (size)
@@ -266,7 +266,7 @@
               ; js/console.log tree
               comp-finger-node tree ([] -300 20) 0
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+          :schema $ :: 'Fn $ {} (:return 'phlox.schema/PhloxElement)
             :args $ [] 'Number
         'digit-append $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn digit-append (digits x)
@@ -505,7 +505,7 @@
                 h-unit 40
               match tree
                 (:branch children)
-                  match (count children)
+                  match (.len children)
                     1 $ let
                         next $ complex/add base $ [] 0 h-unit
                       container ({})
@@ -563,7 +563,7 @@
                     :style $ {} (:font-size 13) (:font-family |Hind)
                       :fill $ hclx 220 90 80
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+          :schema $ :: 'Fn $ {} (:return 'phlox.schema/PhloxElement)
             :args $ [] 'app.comp.ternary-tree/Tree (:: 'List 'Number) 'Bool 'Number
         'comp-ternary-demo $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-ternary-demo (size)
@@ -571,7 +571,7 @@
                 tree $ get-vec-tree size
               comp-node tree ([] -200 20) true 0
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
+          :schema $ :: 'Fn $ {} (:return 'phlox.schema/PhloxElement)
             :args $ [] 'Number
         'count-recursive $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn count-recursive (tree)
