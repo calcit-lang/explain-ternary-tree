@@ -24,6 +24,8 @@ for(const id of ['app.comp.container/comp-container','app.comp.fingertree/comp-f
   const def=expected.find(d=>d.id===id);assert.ok(def);
   const returns=def.schema.filter(x=>Array.isArray(x)&&x[0]===':return');assert.equal(returns.length,1);
   assert.equal(returns[0][1],"'Dynamic");returns[0][1]="'phlox.schema/PhloxElement";
+  assert.deepEqual(def.schema.find(x=>Array.isArray(x)&&x[0]===':kind'),[':kind',':fn']);
+  def.schema=['::',':fn',['{}',...def.schema.slice(1).filter(x=>x[0]!==':kind')]];
   ops.push(['edit','schema',id,'--input-format','json-ast','--code',JSON.stringify(def.schema)]);
 }
 const node=expected.find(d=>d.id==='app.comp.ternary-tree/comp-node');
