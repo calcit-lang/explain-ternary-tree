@@ -12,77 +12,47 @@ and fingertree:
 
 ![](https://pbs.twimg.com/media/FRc1bCKaAAEGwwX?format=jpg&name=4096x4096)
 
-### 展示模型与迁移影响
+### 使用者影响
 
-本项目展示两种教学模型，不是当前 Calcit List 内存结构的检查器。
-Calcit 已使用 FingerVec；旧 `&format-ternary-tree` 的调试字符串不能继续当作
-三叉树数据解析。三叉树现在由应用自己构造，使用 nominal `Tree` 的数字叶子与
-分支列表，沿用 [ternary-tree.ts 的构造分组规则](https://github.com/calcit-lang/ternary-tree.ts/blob/0.0.26/src/list.mts)：
-余数 1 分配到中间，余数 2 分配到两侧。界面同时注明教学模型，保留两种树的切换。
+本分支配对正式 **Calcit / @calcit/procs 0.32.1**、Node24、Yarn4.18.0 和 Caps0.1.1。升级后重新安装依赖、生成 JS、重启开发服务并刷新页面；项目版本仍0.4.12，不代表新增 tag/npm 发布。
 
-不再预生成 1–1000 的调试文本表，也不需要编译器恢复旧表示或加入专用 fix。
-模型和 Enum 操作的回归直接附在 Calcit 定义上，没有额外验证脚本。
+本项目展示两种教学模型，不是当前 Calcit List 内存结构的检查器。Calcit 已使用 FingerVec；三叉树由应用自身构造，沿用 [ternary-tree.ts 的分组规则](https://github.com/calcit-lang/ternary-tree.ts/blob/0.0.26/src/list.mts)：余数1分到中间，余数2分到两侧。保留 Finger Tree 切换、坐标公式、默认值、滑块、计时器和页面报错用 hud!。
 
-本轮进一步收紧五个绘图函数的返回类型：明确使用已有
-`phlox.schema/PhloxElement`，不再把实际元素擦成 Dynamic。
-输入的真实异构 Finger Tree/状态 Map 边界仍保留检查，不用强转冒充封闭类型。
-三叉树分支的 List 长度改用公开 `.len`；教学分组、坐标公式、默认值、
-计时器和回调不变，原三项附着回归保持不变，也保留页面报错用的 `hud!`。
-CLI/procs 仍为正式 0.30.1，整图同步到已发布的 Phlox 0.7.18、
-UI 0.8.1、Touch Control 0.0.33（共同使用 JS FFI 0.2.6）。
-需重新安装正式模块并生成 JS，不混装旧图，也不引用 main/hash。
-Pointed Prompt 的正常输入提交不变；异常宿主 value 不再静默回落为空串。
-IAB 静态绘图可见性仍按 [Phlox #71](https://github.com/Phlox-GL/phlox/issues/71)
-跟踪，类型检查通过不代表该未定位现象已修复。
+### 迁移范围
 
-### Usage
+官方 formatter 转换3处旧类型形式，原31个定义的代码和 schema 保持。原 updater 附带回归只将旧 get-in 的 unwrap 改为直接断言 Result :ok state，保持同一状态值与原三项测试；不提供默认值掩盖路径失败。
+
+已发布模块为 Phlox0.8.0、UI0.9.0、Touch Control0.0.35、Memof0.0.43；传递 JS-FFI0.2.9、Respo0.17.1、Pointed Prompt0.0.24，Router仍为已发布0.9.0-alpha.4。真实 Caps 严格安装八个模块，不使用 main/hash 或未发布版本。
+
+移除已归档且项目 imports、源码及附带定义视图均未引用的 Lilac 根依赖和入口模块路径。保留真正使用的 Memof。没有复制验证框架、增加兼容模块或要求编译器恢复旧三叉树表示。
+
+类型检查、完整 strict 与原三项测试保留。已有 FontFaceObserver/Promise 宿主信任及异构 Finger Tree/状态 Map 边界仍在，不把类型声明冒充运行时证明，也不宣称零债务；不增加强转、质量预算或永久验证脚本。
+
+### 开发与验收
 
 ```bash
 corepack enable
+caps --strict --ci
 yarn install --immutable
-caps --ci
 caps verify --toolchain
+calcit --check-only --all-defs
+calcit fix --workflow strict --verify
+calcit test --require-match
+yarn build
 yarn dev
 ```
 
-`yarn build` compiles the default JS browser entry and builds once. `yarn dev`
-compiles initially and starts Vite; run `calcit calcit.cirru -w` in another
-terminal for live Calcit edits.
+另开终端运行 calcit calcit.cirru -w 监听源码。仅维护 calcit.cirru / deps.cirru，不提交 js-out/dist，不恢复 compact.cirru/package.cirru。新解析 npm 包至少发布60分钟，删除旧单包例外；已有锁版本按 immutable 安装。
 
-This project pins formal Calcit/procs 0.30.1 and Yarn 4.18.0, with released
-Phlox 0.7.18, UI 0.8.1, Touch Control 0.0.33 and Memof 0.0.40.
-The 17 internal Option helper calls now use public `.unwrap-or` methods;
-the educational tree algorithms, defaults and three original regressions are retained.
-Finger Tree's nine unproven List/Map assertions and six unchecked child-list
-boundaries now use checked decoding; malformed internal values fail at those boundaries.
-Canonical sources
-are `calcit.cirru` and `deps.cirru`; retired compact/package snapshots are rejected.
-The released module graph aligns Respo/JS-FFI versions, so CI now uses
-`caps --strict --ci` rather than selecting among conflicting versions.
-Pull requests run validation and the Vite build on Linux.
+本轮以官方0.32.1发布 tag d5fe076a 的隔离构建验收，不混用报告相同版本号的本机 main。原三项 native 回归、全部定义和 JS/Vite 构建通过；实际页面验收覆盖两种模型、滑块、原计时器及刷新。未操作真实存档或剪贴板，不点击全屏按钮。构建保留原大 chunk 提示，没有增加阈值隐藏警告。
 
-COS uses `COS_BUCKET`, `COS_SECRET_ID`, and `COS_SECRET_KEY`; released action
-v1.2.0 validates HTML references and verifies public uploads, without an additional
-checker. PR previews use
-`calcit-lang/explain-ternary-tree/pr/<number>/<run-id>/<attempt>/`; Vite and COS share the
-same base URL. Missing PR secrets skip upload explicitly, not prove deployment.
-The credential-bearing upload action retains its original full commit pin,
-labeled v1.2.0; Calcit modules use exact formal version tags.
-Uploads use 1 MiB parts, two threads and one file retry, with a ten-minute
-step limit. A failed upload or public verification stops deployment.
-Runs queue per PR and separately for production, without cancelling uploads.
-The main-branch server deployment still uses `rsync_private_key` and the pinned
-trusted `.github/ssh_known_hosts`; its original source/destination are unchanged.
+本次候选在 IAB 中可见且可交互；[Phlox #71](https://github.com/Phlox-GL/phlox/issues/71) 的既往可见性问题仍独立跟踪，不把一次候选通过当作全生态问题已解决。
 
-### Workflow
+### 前端部署
 
-GitHub Actions validates immutable Calcit/module/JavaScript dependencies,
-canonical Snapshot formatting, preprocessing, JavaScript generation, and the
-Vite production build.
-All-definition checks and the complete strict workflow are retained; duplicate type-debt diagnostic
-reports are not part of the deployment workflow.
+沿用 COS Action v1.2.0 内置 verify，仅上传 dist。PR 预览使用 calcit-lang/explain-ternary-tree/pr/<number>/<run-id>/<attempt>/，Vite 与 COS 使用同一 base URL，不叠加校验脚本。
 
-Run `calcit test --require-match` for the definition-attached business regressions.
+COS Action 使用与原已审查提交对应的精确正式 tag，按既定策略接受 tag 可移动风险。原权限、凭据条件、1 MiB分片、双线程、一次文件重试与十分钟步限保持。只在 main 执行原 rsync，可信 .github/ssh_known_hosts、指纹检查和原源/目标目录保持；本次不合并、不部署、不发 tag/npm。
 
 ### License
 
