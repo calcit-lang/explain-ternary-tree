@@ -5,7 +5,7 @@
   :entries $ {} $ :default
     {} (:description |) (:init-fn 'app.main/main!) (:mode :js) (:reload-fn 'app.main/reload!) (:target :browser)
       :feature-policy $ {}
-      :modules $ [] |memof/ |lilac/ |respo-ui.calcit/ |phlox/ |touch-control/
+      :modules $ [] |memof/ |respo-ui.calcit/ |phlox/ |touch-control/
       :type-slots $ {}
   :files $ {}
     'app.comp.container $ %{} 'FileEntry
@@ -63,9 +63,7 @@
                     d! $ :: :states cursor $ update state :finger? not
                 if finger? (comp-fingertree-demo n) (comp-ternary-demo n)
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'phlox.schema/PhloxElement)
-            :args $ [] $ :: 'Map 'Tag 'Dynamic
-            :features $ #{} :js-ffi
+          :schema $ quote $ Fn (Map Tag Dynamic) (-> phlox.schema/PhloxElement) (:features :js-ffi)
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.comp.container
           :require
@@ -252,8 +250,7 @@
                   :align :center
                   :style $ {} (:fill |red) (:font-size 10) (:font-family |Hind)
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'phlox.schema/PhloxElement)
-            :args $ [] 'Dynamic (:: 'List 'Number) 'Number
+          :schema $ quote $ Fn Dynamic (List Number) Number (-> phlox.schema/PhloxElement)
         'comp-fingertree-demo $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-fingertree-demo (size)
             let
@@ -266,8 +263,7 @@
               ; js/console.log tree
               comp-finger-node tree ([] -300 20) 0
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'phlox.schema/PhloxElement)
-            :args $ [] 'Number
+          :schema $ quote $ Fn Number (-> phlox.schema/PhloxElement)
         'digit-append $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn digit-append (digits x)
             if
@@ -282,8 +278,7 @@
                   _ $ raise "|unknown digit varient"
               raise "|expected digits"
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Dynamic)
-            :args $ [] (:: 'List 'Dynamic) 'Dynamic
+          :schema $ quote $ Fn (List Dynamic) Dynamic (-> Dynamic)
         'digit-full? $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn digit-full? (digits)
             if
@@ -291,8 +286,7 @@
               = :d4 $ &list:nth digits 1
               raise "|expected digit variant"
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Bool)
-            :args $ [] $ :: 'List 'Dynamic
+          :schema $ quote $ Fn (List Dynamic) (-> Bool)
         'finger-append $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn finger-append (tree x)
             if
@@ -322,9 +316,8 @@
                 _ $ raise "|unknown variant of finger tree"
               raise "|expected finger tree"
           :examples $ []
-          :schema $ :: 'Fn $ {}
-            :args $ [] (:: 'List 'Dynamic) 'Dynamic
-            :return $ :: 'List 'Dynamic
+          :schema $ quote $ Fn (List Dynamic) Dynamic
+            -> $ List Dynamic
           :tests $ [] $ %{} 'TestEntry (:name |append-preserves-leaves)
             :code $ quote $ do
               assert=
@@ -390,8 +383,7 @@
                 _ $ raise "|unknown kind of tree"
               , 1
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'Dynamic
+          :schema $ quote $ Fn Dynamic (-> Number)
         'finger-count-left $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn finger-count-left (tree)
             if (list? tree)
@@ -411,8 +403,7 @@
                 _ $ raise "|unknown kind of tree"
               , 1
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'Dynamic
+          :schema $ quote $ Fn Dynamic (-> Number)
         'finger-count-right $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn finger-count-right (tree)
             if (list? tree)
@@ -432,32 +423,25 @@
                 _ $ raise "|unknown kind of tree"
               , 1
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'Dynamic
+          :schema $ quote $ Fn Dynamic (-> Number)
         'nth0 $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defmacro nth0 (xs)
             quasiquote $ &list:nth ~xs 0
           :examples $ []
-          :schema $ :: 'Macro $ {}
-            :capabilities $ #{}
-            :expansion $ :: 'Expr 'Dynamic
-            :required $ [] 'Syntax
+          :schema $ quote $ Macro Syntax
+            -> $ Expr Dynamic
         'nth1 $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defmacro nth1 (xs)
             quasiquote $ &list:nth ~xs 1
           :examples $ []
-          :schema $ :: 'Macro $ {}
-            :capabilities $ #{}
-            :expansion $ :: 'Expr 'Dynamic
-            :required $ [] 'Syntax
+          :schema $ quote $ Macro Syntax
+            -> $ Expr Dynamic
         'nth2 $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defmacro nth2 (xs)
             quasiquote $ &list:nth ~xs 2
           :examples $ []
-          :schema $ :: 'Macro $ {}
-            :capabilities $ #{}
-            :expansion $ :: 'Expr 'Dynamic
-            :required $ [] 'Syntax
+          :schema $ quote $ Macro Syntax
+            -> $ Expr Dynamic
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.comp.fingertree
           :require
@@ -474,7 +458,7 @@
         'Tree $ %{} 'CodeEntry (:doc |)
           :code $ quote $ def Tree
             defenum Tree (:leaf 'Number)
-              :branch $ :: 'List 'app.comp.ternary-tree/Tree
+              :branch $ quote $ List app.comp.ternary-tree/Tree
           :examples $ []
         'build-ternary-tree $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn build-ternary-tree (size offset)
@@ -496,8 +480,7 @@
                   build-ternary-tree middle-size $ + offset left-size
                   build-ternary-tree right-size $ + offset left-size middle-size
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'app.comp.ternary-tree/Tree)
-            :args $ [] 'Number 'Number
+          :schema $ quote $ Fn Number Number (-> app.comp.ternary-tree/Tree)
         'comp-node $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-node (tree base center? level)
             let
@@ -563,16 +546,14 @@
                     :style $ {} (:font-size 13) (:font-family |Hind)
                       :fill $ hclx 220 90 80
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'phlox.schema/PhloxElement)
-            :args $ [] 'app.comp.ternary-tree/Tree (:: 'List 'Number) 'Bool 'Number
+          :schema $ quote $ Fn app.comp.ternary-tree/Tree (List Number) Bool Number (-> phlox.schema/PhloxElement)
         'comp-ternary-demo $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-ternary-demo (size)
             let
                 tree $ get-vec-tree size
               comp-node tree ([] -200 20) true 0
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'phlox.schema/PhloxElement)
-            :args $ [] 'Number
+          :schema $ quote $ Fn Number (-> phlox.schema/PhloxElement)
         'count-recursive $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn count-recursive (tree)
             match tree
@@ -580,13 +561,11 @@
               (:branch children)
                 foldl (map children count-recursive) 0 &+
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Number)
-            :args $ [] 'app.comp.ternary-tree/Tree
+          :schema $ quote $ Fn app.comp.ternary-tree/Tree (-> Number)
         'get-vec-tree $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn get-vec-tree (n) (build-ternary-tree n 0)
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'app.comp.ternary-tree/Tree)
-            :args $ [] 'Number
+          :schema $ quote $ Fn Number (-> app.comp.ternary-tree/Tree)
           :tests $ [] $ %{} 'TestEntry (:name |preserves-leaf-count)
             :code $ quote $ do
               assert=
@@ -622,7 +601,7 @@
             {} (:width 2) (:alpha 1)
               :color $ hclx 220 100 60
           :examples $ []
-          :schema $ :: 'Dynamic
+          :schema $ quote Dynamic
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.comp.ternary-tree
           :require
@@ -640,12 +619,12 @@
           :code $ quote $ def dev?
             = |dev $ .unwrap-or (get-env |mode) |release
           :examples $ []
-          :schema $ :: 'Bool
+          :schema $ quote Bool
         'site $ %{} 'CodeEntry (:doc |)
           :code $ quote $ def site
             {} (:dev-ui |http://localhost:8100/main.css) (:release-ui |http://cdn.tiye.me/favored-fonts/main.css) (:cdn-url |http://cdn.tiye.me/phlox/) (:title |Phlox) (:icon |http://cdn.tiye.me/logo/quamolit.png) (:storage-key |phlox)
           :examples $ []
-          :schema $ :: 'Map 'Tag 'String
+          :schema $ quote $ Map Tag String
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.config
     'app.main $ %{} 'FileEntry
@@ -653,25 +632,21 @@
         '*store $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defref *store schema/store
           :examples $ []
-          :schema $ :: 'Ref $ :: 'Map 'Tag 'Dynamic
+          :schema $ quote $ Ref (Map Tag Dynamic)
         'FontFaceObserverHost $ %{} 'CodeEntry (:doc |)
           :code $ quote $ deftrait FontFaceObserverHost
-            .load $ :: 'Fn $ {}
-              :args $ []
-              :return 'JsObject
+            .load $ quote $ Fn (-> JsObject)
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :browser)
-          :schema $ :: 'Trait
+          :schema $ quote Trait
         'PromiseHost $ %{} 'CodeEntry (:doc |)
           :code $ quote $ deftrait PromiseHost
-            .then $ :: 'Fn $ {}
-              :args $ [] $ :: 'Fn
-                {} (:return 'Unit)
-                  :args $ [] 'Dynamic
-              :return 'Dynamic
+            .then $ quote $ Fn
+              Fn Dynamic $ -> Unit
+              -> Dynamic
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :browser)
-          :schema $ :: 'Trait
+          :schema $ quote Trait
         'dispatch! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn dispatch! (op)
             when dev? $ println |dispatch! op
@@ -687,9 +662,7 @@
                 reset! *store $ updater @*store op
             , &unit
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Unit)
-            :args $ [] 'Enum
-            :features $ #{} :js-ffi
+          :schema $ quote $ Fn Enum (-> Unit) (:features :js-ffi)
         'main! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn main! () (; js/console.log PIXI)
             if dev? $ load-console-formatter!
@@ -702,9 +675,7 @@
             start-control-loop! 8 on-control-event
             println "|App Started"
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Unit)
-            :args $ []
-            :features $ #{} :js-ffi
+          :schema $ quote $ Fn (-> Unit) (:features :js-ffi)
         'reload! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn reload! ()
             if (nil? build-errors)
@@ -716,16 +687,12 @@
               hud! |error build-errors
             , &unit
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Unit)
-            :args $ []
-            :features $ #{} :js-ffi
+          :schema $ quote $ Fn (-> Unit) (:features :js-ffi)
         'render-app! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn render-app! ()
             render! (comp-container @*store) dispatch! $ {}
           :examples $ []
-          :schema $ :: 'Fn $ {} (:return 'Unit)
-            :args $ []
-            :features $ #{} :js-ffi
+          :schema $ quote $ Fn (-> Unit) (:features :js-ffi)
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.main
           :require (|pixi.js :as PIXI)
@@ -748,7 +715,7 @@
               :states $ {} $ :cursor ([])
               :n 1
           :examples $ []
-          :schema $ :: 'Map 'Tag 'Dynamic
+          :schema $ quote $ Map Tag Dynamic
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.schema
     'app.task $ %{} 'FileEntry
@@ -756,7 +723,7 @@
         %{} 'CodeEntry (:doc |)
           :code $ quote $ defref *inc-task 0
           :examples $ []
-          :schema $ :: 'Ref 'Dynamic
+          :schema $ quote $ Ref Dynamic
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.task
     'app.updater $ %{} 'FileEntry
@@ -777,9 +744,8 @@
                 decode-map-as data $ :: 'Map 'Tag 'Dynamic
               _ $ do (eprintln "|unknown op" op) store
           :examples $ []
-          :schema $ :: 'Fn $ {}
-            :args $ [] (:: 'Map 'Tag 'Dynamic) 'Enum
-            :return $ :: 'Map 'Tag 'Dynamic
+          :schema $ quote $ Fn (Map Tag Dynamic) Enum
+            -> $ Map Tag Dynamic
           :tests $ [] $ %{} 'TestEntry (:name |enum-count-and-cursor)
             :code $ quote $ let
                 store $ {} (:n 1)
@@ -794,9 +760,8 @@
               assert=
                 .unwrap $ get selected :n
                 , 10
-              assert=
-                .unwrap $ get-in updated $ [] :states :data
-                , state
+              assert= (Result :ok state)
+                get-in updated $ [] :states :data
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.updater
           :require $ phlox.cursor :refer $ update-states
