@@ -14,19 +14,15 @@ and fingertree:
 
 ### 使用者影响
 
-本分支配对正式 **Calcit / @calcit/procs 0.32.1**、Node24、Yarn4.18.0 和 Caps0.1.1。升级后重新安装依赖、生成 JS、重启开发服务并刷新页面；项目版本仍0.4.12，不代表新增 tag/npm 发布。
+本分支配对正式 **Calcit / @calcit/procs 0.37.0**、Node24、Yarn4.18.0 和 Caps0.1.1。升级后重新安装依赖、生成 JS、重启开发服务并刷新页面；项目版本仍0.4.12，不代表新增 tag/npm 发布。
 
 本项目展示两种教学模型，不是当前 Calcit List 内存结构的检查器。Calcit 已使用 FingerVec；三叉树由应用自身构造，沿用 [ternary-tree.ts 的分组规则](https://github.com/calcit-lang/ternary-tree.ts/blob/0.0.26/src/list.mts)：余数1分到中间，余数2分到两侧。保留 Finger Tree 切换、坐标公式、默认值、滑块、计时器和页面报错用 hud!。
 
 ### 迁移范围
 
-官方 formatter 转换3处旧类型形式，原31个定义的代码和 schema 保持。原 updater 附带回归只将旧 get-in 的 unwrap 改为直接断言 Result :ok state，保持同一状态值与原三项测试；不提供默认值掩盖路径失败。
+本轮配对正式 Phlox 0.9.3、Respo UI 0.15.2、Touch Control 0.0.39 和 Memof 0.0.47。存储对象和业务操作用具名类型表达，滑块直接派发数字，计时器使用浏览器的数字句柄。Phlox 传入的旧事件在入口解码，游标路径和组件状态值仍按 Phlox 的开放合同处理。
 
-已发布模块为 Phlox0.8.0、UI0.9.0、Touch Control0.0.35、Memof0.0.43；传递 JS-FFI0.2.9、Respo0.17.1、Pointed Prompt0.0.24，Router仍为已发布0.9.0-alpha.4。真实 Caps 严格安装八个模块，不使用 main/hash 或未发布版本。
-
-移除已归档且项目 imports、源码及附带定义视图均未引用的 Lilac 根依赖和入口模块路径。保留真正使用的 Memof。没有复制验证框架、增加兼容模块或要求编译器恢复旧三叉树表示。
-
-类型检查、完整 strict 与原三项测试保留。已有 FontFaceObserver/Promise 宿主信任及异构 Finger Tree/状态 Map 边界仍在，不把类型声明冒充运行时证明，也不宣称零债务；不增加强转、质量预算或永久验证脚本。
+指树计数保留 `Option`，缺失槽仍按原先的叶子计数处理。渲染消费由生成器提供的完整深层节点。原三项测试继续覆盖树结构、叶子计数和状态更新；页面的构建错误提示继续使用 `hud!`。
 
 ### 开发与验收
 
@@ -43,10 +39,6 @@ yarn dev
 ```
 
 另开终端运行 calcit calcit.cirru -w 监听源码。仅维护 calcit.cirru / deps.cirru，不提交 js-out/dist，不恢复 compact.cirru/package.cirru。新解析 npm 包至少发布60分钟，删除旧单包例外；已有锁版本按 immutable 安装。
-
-本轮以官方0.32.1发布 tag d5fe076a 的隔离构建验收，不混用报告相同版本号的本机 main。原三项 native 回归、全部定义和 JS/Vite 构建通过；实际页面验收覆盖两种模型、滑块、原计时器及刷新。未操作真实存档或剪贴板，不点击全屏按钮。构建保留原大 chunk 提示，没有增加阈值隐藏警告。
-
-本次候选在 IAB 中可见且可交互；[Phlox #71](https://github.com/Phlox-GL/phlox/issues/71) 的既往可见性问题仍独立跟踪，不把一次候选通过当作全生态问题已解决。
 
 ### 前端部署
 
