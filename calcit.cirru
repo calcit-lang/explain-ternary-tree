@@ -79,144 +79,150 @@
             app.comp.fingertree :refer $ comp-fingertree-demo
     'app.comp.fingertree $ %{} 'FileEntry
       :defs $ {}
+        'FingerBranch $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defenum FingerBranch (:node2 app.comp.fingertree/FingerNode app.comp.fingertree/FingerNode) (:node3 app.comp.fingertree/FingerNode app.comp.fingertree/FingerNode app.comp.fingertree/FingerNode)
+          :examples $ []
+          :schema $ quote EnumDef
+        'FingerDigit $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defenum FingerDigit (:d1 app.comp.fingertree/FingerNode) (:d2 app.comp.fingertree/FingerNode app.comp.fingertree/FingerNode) (:d3 app.comp.fingertree/FingerNode app.comp.fingertree/FingerNode app.comp.fingertree/FingerNode) (:d4 app.comp.fingertree/FingerNode app.comp.fingertree/FingerNode app.comp.fingertree/FingerNode app.comp.fingertree/FingerNode)
+          :examples $ []
+          :schema $ quote EnumDef
+        'FingerNode $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defunion FingerNode Number FingerTree FingerBranch FingerDigit
+          :examples $ []
+          :schema $ quote UnionDef
+        'FingerTree $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defenum FingerTree (:empty) (:single app.comp.fingertree/FingerNode) (:deep app.comp.fingertree/FingerDigit app.comp.fingertree/FingerTree app.comp.fingertree/FingerDigit)
+          :examples $ []
+          :schema $ quote EnumDef
         'comp-finger-node $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-finger-node (tree base level)
             let
                 w-unit 8
                 h-unit 32
-              if (list? tree)
-                match (nth0 tree)
-                  :finger-tree $ container ({})
-                    match (nth1 tree)
-                      :empty $ circle $ {} (:position base) (:radius 8)
-                        :line-style $ {} (:width 1)
-                          :color $ hclx 30 90 80
-                          :alpha 1
-                        :fill 0x000001
-                      :single $ let
-                          next $ complex/add base $ [] 0 h-unit
-                        container ({})
-                          polyline $ {} (:style style-line)
-                            :points $ [] base next
-                          comp-finger-node (nth2 tree) next level
-                      :deep $ let
-                          inside $ decode-map-as (nth2 tree) (Map Tag Dynamic)
-                          left-tree $ .unwrap $ get inside :left
-                          middle-tree $ .unwrap $ get inside :middle
-                          right-tree $ .unwrap $ get inside :right
-                          size-left $ finger-count left-tree
-                          size-right $ finger-count right-tree
-                          size-middle $ finger-count middle-tree
-                          left $ complex/add base $ []
-                            * -1 w-unit $ + (* 0.5 size-left) (* 0.5 size-middle)
-                            , h-unit
-                          middle $ complex/add base $ [] 0
-                            + $ * (+ 1 level) h-unit
-                          right $ complex/add base $ []
-                            * 1 w-unit $ + (* 0.5 size-right) (* 0.5 size-middle)
-                            , h-unit
-                        container ({}) (comp-finger-node left-tree left level)
-                          comp-finger-node middle-tree middle $ inc level
-                          comp-finger-node right-tree right level
-                          polyline $ {} (:style style-line)
-                            :points $ [] base left
-                          polyline $ {} (:style style-line)
-                            :points $ [] base middle
-                          polyline $ {} (:style style-line)
-                            :points $ [] base right
-                      _ $ raise "|unknown finger tree variant"
+              match tree
+                (FingerTree branch)
+                  container ({})
+                    match branch
+                      (:empty)
+                        circle $ {} (:position base) (:radius 8)
+                          :line-style $ {} (:width 1)
+                            :color $ hclx 30 90 80
+                            :alpha 1
+                          :fill 0x000001
+                      (:single child)
+                        let
+                            next $ complex/add base $ [] 0 h-unit
+                          container ({})
+                            polyline $ {} (:style style-line)
+                              :points $ [] base next
+                            comp-finger-node child next level
+                      (:deep left-tree middle-tree right-tree)
+                        let
+                            size-left $ finger-count left-tree
+                            size-right $ finger-count right-tree
+                            size-middle $ finger-count middle-tree
+                            left $ complex/add base $ []
+                              * -1 w-unit $ + (* 0.5 size-left) (* 0.5 size-middle)
+                              , h-unit
+                            middle $ complex/add base $ [] 0
+                              + $ * (+ 1 level) h-unit
+                            right $ complex/add base $ []
+                              * 1 w-unit $ + (* 0.5 size-right) (* 0.5 size-middle)
+                              , h-unit
+                          container ({}) (comp-finger-node left-tree left level)
+                            comp-finger-node middle-tree middle $ inc level
+                            comp-finger-node right-tree right level
+                            polyline $ {} (:style style-line)
+                              :points $ [] base left
+                            polyline $ {} (:style style-line)
+                              :points $ [] base middle
+                            polyline $ {} (:style style-line)
+                              :points $ [] base right
                     circle $ {} (:position base) (:radius 8)
                       :line-style $ {} (:width 1)
                         :color $ hclx 30 90 80
                         :alpha 1
                       :fill $ hclx 30 90 80
-                  :node $ container ({})
-                    match (nth1 tree)
-                      :node2 $ let
-                          inside $ decode-map-as (nth2 tree) (List Dynamic)
-                          left $ complex/add base $ [] (* -1 w-unit) (* 1.5 h-unit)
-                          right $ complex/add base $ [] (* 1 w-unit) (* 1.5 h-unit)
-                        container ({})
-                          comp-finger-node (nth0 inside) left level
-                          comp-finger-node (nth1 inside) right level
-                          polyline $ {} (:style style-line)
-                            :points $ [] base left
-                          polyline $ {} (:style style-line)
-                            :points $ [] base right
-                      :node3 $ let
-                          inside $ decode-map-as (nth2 tree) (List Dynamic)
-                          size-left $ finger-count $ nth0 inside
-                          size-middle $ finger-count $ nth1 inside
-                          size-right $ finger-count $ nth2 inside
-                          left $ complex/add base $ []
-                            * -0.5 w-unit $ + size-left size-middle
-                            * 1.5 h-unit
-                          middle $ complex/add base $ [] 0
-                            + 8 $ * 1.5 h-unit
-                          right $ complex/add base $ []
-                            * 0.5 w-unit $ + size-right size-middle
-                            * 1.5 h-unit
-                        container ({})
-                          comp-finger-node (nth0 inside) left level
-                          comp-finger-node (nth1 inside) middle level
-                          comp-finger-node (nth2 inside) right level
-                          polyline $ {} (:style style-line)
-                            :points $ [] base left
-                          polyline $ {} (:style style-line)
-                            :points $ [] base middle
-                          polyline $ {} (:style style-line)
-                            :points $ [] base right
-                      _ $ raise "|unknown node variant"
+                (FingerBranch branch)
+                  container ({})
+                    match branch
+                      (:node2 a b)
+                        let
+                            left $ complex/add base $ [] (* -1 w-unit) (* 1.5 h-unit)
+                            right $ complex/add base $ [] (* 1 w-unit) (* 1.5 h-unit)
+                          container ({}) (comp-finger-node a left level) (comp-finger-node b right level)
+                            polyline $ {} (:style style-line)
+                              :points $ [] base left
+                            polyline $ {} (:style style-line)
+                              :points $ [] base right
+                      (:node3 a b c)
+                        let
+                            size-left $ finger-count a
+                            size-middle $ finger-count b
+                            size-right $ finger-count c
+                            left $ complex/add base $ []
+                              * -0.5 w-unit $ + size-left size-middle
+                              * 1.5 h-unit
+                            middle $ complex/add base $ [] 0
+                              + 8 $ * 1.5 h-unit
+                            right $ complex/add base $ []
+                              * 0.5 w-unit $ + size-right size-middle
+                              * 1.5 h-unit
+                          container ({}) (comp-finger-node a left level) (comp-finger-node b middle level) (comp-finger-node c right level)
+                            polyline $ {} (:style style-line)
+                              :points $ [] base left
+                            polyline $ {} (:style style-line)
+                              :points $ [] base middle
+                            polyline $ {} (:style style-line)
+                              :points $ [] base right
                     rect $ {}
                       :position $ complex/add base $ [] -8 -8
                       :size $ [] 16 16
                       :line-style $ {} (:width 2) (:alpha 1)
                         :color $ hclx 40 80 60
                       :fill $ hclx 40 80 60
-                  :digit $ let
-                      inside $ decode-map-as (nth2 tree) (List Dynamic)
-                    match (nth1 tree)
-                      :d1 $ let
+                (FingerDigit digit)
+                  match digit
+                    (:d1 a)
+                      let
                           next $ complex/add base $ [] 0 (* 1.5 h-unit)
-                        container ({})
-                          comp-finger-node (nth0 inside) next level
+                        container ({}) (comp-finger-node a next level)
                           polyline $ {} (:style style-line)
                             :points $ [] base next
-                      :d2 $ let
-                          s0 $ finger-count $ nth0 inside
-                          s1 $ finger-count $ nth1 inside
+                    (:d2 a b)
+                      let
+                          s0 $ finger-count a
+                          s1 $ finger-count b
                           p0 $ complex/add base $ [] (* -0.5 w-unit s0) (* 1.5 h-unit)
                           p1 $ complex/add base $ [] (* 0.5 w-unit s1) (* 1.5 h-unit)
-                        container ({})
-                          comp-finger-node (nth0 inside) p0 level
-                          comp-finger-node (nth1 inside) p1 level
+                        container ({}) (comp-finger-node a p0 level) (comp-finger-node b p1 level)
                           polyline $ {} (:style style-line)
                             :points $ [] base p0
                           polyline $ {} (:style style-line)
                             :points $ [] base p1
-                      :d3 $ let
-                          s0 $ finger-count $ nth0 inside
-                          s1 $ finger-count $ nth1 inside
-                          s2 $ finger-count $ nth2 inside
+                    (:d3 a b c)
+                      let
+                          s0 $ finger-count a
+                          s1 $ finger-count b
+                          s2 $ finger-count c
                           p0 $ complex/add base $ [] (* -1 w-unit s0) (* 1.5 h-unit)
                           p1 $ complex/add base $ [] 0
                             + 16 $ * 1.5 h-unit
                           p2 $ complex/add base $ [] (* 1 w-unit s2) (* 1.5 h-unit)
-                        container ({})
-                          comp-finger-node (nth0 inside) p0 level
-                          comp-finger-node (nth1 inside) p1 level
-                          comp-finger-node (nth2 inside) p2 level
+                        container ({}) (comp-finger-node a p0 level) (comp-finger-node b p1 level) (comp-finger-node c p2 level)
                           polyline $ {} (:style style-line)
                             :points $ [] base p0
                           polyline $ {} (:style style-line)
                             :points $ [] base p1
                           polyline $ {} (:style style-line)
                             :points $ [] base p2
-                      :d4 $ let
-                          s0 $ finger-count $ nth0 inside
-                          s1 $ finger-count $ nth1 inside
-                          s2 $ finger-count $ nth2 inside
-                          s3 $ finger-count $ &list:nth inside 3
+                    (:d4 a b c d)
+                      let
+                          s0 $ finger-count a
+                          s1 $ finger-count b
+                          s2 $ finger-count c
+                          s3 $ finger-count d
                           p0 $ complex/add base $ []
                             * -1 w-unit $ + s1 $ * 0.5 s0
                             * 1.5 h-unit
@@ -229,11 +235,7 @@
                           p3 $ complex/add base $ []
                             * 1 w-unit $ + s2 $ * 0.5 s3
                             * 1.5 h-unit
-                        container ({})
-                          comp-finger-node (nth0 inside) p0 level
-                          comp-finger-node (nth1 inside) p1 level
-                          comp-finger-node (nth2 inside) p2 level
-                          comp-finger-node (&list:nth inside 3) p3 level
+                        container ({}) (comp-finger-node a p0 level) (comp-finger-node b p1 level) (comp-finger-node c p2 level) (comp-finger-node d p3 level)
                           polyline $ {} (:style style-line)
                             :points $ [] base p0
                           polyline $ {} (:style style-line)
@@ -242,213 +244,97 @@
                             :points $ [] base p2
                           polyline $ {} (:style style-line)
                             :points $ [] base p3
-                      _ $ raise "|unknown digit variant"
-                  _ $ raise "|unknown type"
-                text $ {}
-                  :text $ str tree
-                  :position $ complex/add base $ [] 0 8
-                  :align :center
-                  :style $ {} (:fill |red) (:font-size 10) (:font-family |Hind)
+                (Number value)
+                  text $ {}
+                    :text $ str value
+                    :position $ complex/add base $ [] 0 8
+                    :align :center
+                    :style $ {} (:fill |red) (:font-size 10) (:font-family |Hind)
           :examples $ []
-          :schema $ quote $ Fn Dynamic (List Number) Number (-> phlox.schema/PhloxElement)
+          :schema $ quote $ Fn app.comp.fingertree/FingerNode (List Number) Number (-> phlox.schema/PhloxElement)
         'comp-fingertree-demo $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-fingertree-demo (size)
             let
                 tree $ loop
-                    acc $ [] :finger-tree :empty nil
+                    acc $ FingerTree :empty
                     n 0
                   if (< n size)
                     recur (finger-append acc n) (inc n)
                     , acc
-              ; js/console.log tree
               comp-finger-node tree ([] -300 20) 0
           :examples $ []
           :schema $ quote $ Fn Number (-> phlox.schema/PhloxElement)
         'digit-append $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn digit-append (digits x)
-            if
-              = :digit $ &list:nth digits 0
-              let
-                  inside $ decode-map-as (&list:nth digits 2) (List Dynamic)
-                match (&list:nth digits 1)
-                  :d1 $ [] :digit :d2 $ conj inside x
-                  :d2 $ [] :digit :d3 $ conj inside x
-                  :d3 $ [] :digit :d4 $ conj inside x
-                  :d4 $ raise "|already full, cannot append"
-                  _ $ raise "|unknown digit varient"
-              raise "|expected digits"
+          :code $ quote $ defn digit-append (digit value)
+            match digit
+              (:d1 a) (FingerDigit :d2 a value)
+              (:d2 a b) (FingerDigit :d3 a b value)
+              (:d3 a b c) (FingerDigit :d4 a b c value)
+              (:d4 _a _b _c _d) (raise "|already full, cannot append")
           :examples $ []
-          :schema $ quote $ Fn (List Dynamic) Dynamic (-> Dynamic)
-        'digit-full? $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn digit-full? (digits)
-            if
-              = :digit $ &list:nth digits 0
-              = :d4 $ &list:nth digits 1
-              raise "|expected digit variant"
-          :examples $ []
-          :schema $ quote $ Fn (List Dynamic) (-> Bool)
+          :schema $ quote $ Fn app.comp.fingertree/FingerDigit app.comp.fingertree/FingerNode (-> app.comp.fingertree/FingerDigit)
         'finger-append $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn finger-append (tree x)
-            if
-              = :finger-tree $ &list:nth tree 0
-              match (&list:nth tree 1)
-                :empty $ [] :finger-tree :single x
-                :single $ [] :finger-tree :deep $ {}
-                  :left $ [] :digit :d1 $ [] (&list:nth tree 2)
-                  :middle $ [] :finger-tree :empty nil
-                  :right $ [] :digit :d1 $ [] x
-                :deep $ let
-                    inside $ decode-map-as (&list:nth tree 2) (Map Tag Dynamic)
-                    right-digit $ decode-map-as
-                      .unwrap-or (get inside :right)
-                        [] :digit :d1 $ []
-                      List Dynamic
-                    middle-tree $ decode-map-as
-                      .unwrap-or (get inside :middle) ([] :finger-tree :empty nil)
-                      List Dynamic
-                  if (digit-full? right-digit)
-                    let
-                        digit-internal $ decode-map-as (&list:nth right-digit 2) (List Dynamic)
-                      [] :finger-tree :deep $ -> inside
-                        assoc :middle $ finger-append middle-tree $ [] :node :node3 (take digit-internal 3)
-                        assoc :right $ [] :digit :d2 $ [] (&list:nth digit-internal 3) x
-                    [] :finger-tree :deep $ assoc inside :right $ digit-append right-digit x
-                _ $ raise "|unknown variant of finger tree"
-              raise "|expected finger tree"
+          :code $ quote $ defn finger-append (tree value)
+            match tree
+              (:empty) (FingerTree :single value)
+              (:single child)
+                FingerTree :deep (FingerDigit :d1 child) (FingerTree :empty) (FingerDigit :d1 value)
+              (:deep left middle right)
+                match right
+                  (:d4 a b c d)
+                    FingerTree :deep left
+                      finger-append middle $ FingerBranch :node3 a b c
+                      FingerDigit :d2 d value
+                  _ $ FingerTree :deep left middle $ digit-append right value
           :examples $ []
-          :schema $ quote $ Fn (List Dynamic) Dynamic
-            -> $ List Dynamic
+          :schema $ quote $ Fn app.comp.fingertree/FingerTree app.comp.fingertree/FingerNode (-> app.comp.fingertree/FingerTree)
           :tests $ [] $ %{} 'TestEntry (:name |append-preserves-leaves)
             :code $ quote $ do
               assert=
                 finger-append
-                  finger-append ([] :finger-tree :empty nil) 0
+                  finger-append (FingerTree :empty) 0
                   , 1
-                [] :finger-tree :deep $ {}
-                  :left $ [] :digit :d1 $ [] 0
-                  :middle $ [] :finger-tree :empty nil
-                  :right $ [] :digit :d1 $ [] 1
+                FingerTree :deep (FingerDigit :d1 0) (FingerTree :empty) (FingerDigit :d1 1)
+              assert=
+                -> (FingerTree :empty) (finger-append 0) (finger-append 1) (finger-append 2) (finger-append 3) (finger-append 4) (finger-append 5)
+                FingerTree :deep (FingerDigit :d1 0)
+                  FingerTree :single $ FingerBranch :node3 1 2 3
+                  FingerDigit :d2 4 5
               loop
-                  tree $ [] :finger-tree :empty nil
+                  tree $ FingerTree :empty
                   n 0
                 assert= (finger-count tree) n
                 if (< n 1000)
                   recur (finger-append tree n) (inc n)
                   , &unit
+            :tags $ #{} :unit
         'finger-count $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn finger-count (tree)
-            if (list? tree)
-              match (nth0 tree)
-                :finger-tree $ match (nth1 tree) (:empty 0)
-                  :single $ let
-                      inside $ nth2 tree
-                    finger-count inside
-                  :deep $ let
-                      inside $ decode-map-as (nth2 tree) (Map Tag Dynamic)
-                      left-tree $ get inside :left
-                      middle-tree $ get inside :middle
-                      right-tree $ get inside :right
-                    +
-                      .unwrap-or (.map left-tree finger-count) 1
-                      .unwrap-or (.map middle-tree finger-count) 1
-                      .unwrap-or (.map right-tree finger-count) 1
-                  _ $ raise "|unknown kind of finger-tree"
-                :node $ match (nth1 tree)
-                  :node2 $ let
-                      inside $ decode-map-as (&list:nth tree 2) (List Dynamic)
-                    +
-                      finger-count $ &list:nth inside 0
-                      finger-count $ &list:nth inside 1
-                  :node3 $ let
-                      inside $ decode-map-as (&list:nth tree 2) (List Dynamic)
-                    +
-                      finger-count $ &list:nth inside 0
-                      finger-count $ &list:nth inside 1
-                      finger-count $ &list:nth inside 2
-                  _ $ raise "|unknown kind of node"
-                :digit $ let
-                    inside $ decode-map-as (nth2 tree) (List Dynamic)
-                  match (nth1 tree)
-                    :d1 $ finger-count $ &list:nth inside 0
-                    :d2 $ +
-                      finger-count $ &list:nth inside 0
-                      finger-count $ &list:nth inside 1
-                    :d3 $ +
-                      finger-count $ &list:nth inside 0
-                      finger-count $ &list:nth inside 1
-                      finger-count $ &list:nth inside 2
-                    :d4 $ +
-                      finger-count $ &list:nth inside 0
-                      finger-count $ &list:nth inside 1
-                      finger-count $ &list:nth inside 2
-                      finger-count $ &list:nth inside 3
-                    _ $ raise "|unknown kind of digit"
-                _ $ raise "|unknown kind of tree"
-              , 1
+          :code $ quote $ defn finger-count (node)
+            match node
+              (Number _) 1
+              (FingerTree tree)
+                match tree
+                  (:empty) 0
+                  (:single child) (finger-count child)
+                  (:deep left middle right)
+                    + (finger-count left) (finger-count middle) (finger-count right)
+              (FingerBranch branch)
+                match branch
+                  (:node2 a b)
+                    + (finger-count a) (finger-count b)
+                  (:node3 a b c)
+                    + (finger-count a) (finger-count b) (finger-count c)
+              (FingerDigit digit)
+                match digit
+                  (:d1 a) (finger-count a)
+                  (:d2 a b)
+                    + (finger-count a) (finger-count b)
+                  (:d3 a b c)
+                    + (finger-count a) (finger-count b) (finger-count c)
+                  (:d4 a b c d)
+                    + (finger-count a) (finger-count b) (finger-count c) (finger-count d)
           :examples $ []
-          :schema $ quote $ Fn Dynamic (-> Number)
-        'finger-count-left $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn finger-count-left (tree)
-            if (list? tree)
-              match (&list:nth tree 0)
-                :finger-tree $ match (&list:nth tree 1) (:empty 0)
-                  :single $ let
-                      inside $ &list:nth tree 2
-                    finger-count inside
-                  :deep $ let
-                      inside $ decode-map-as (&list:nth tree 2) (Map Tag Dynamic)
-                      left-tree $ get inside :left
-                      middle-tree $ get inside :middle
-                    +
-                      .unwrap-or (.map left-tree finger-count) 1
-                      .unwrap-or (.map middle-tree finger-count-left) 1
-                  _ $ raise "|unknown kind of finger-tree"
-                :node $ finger-count tree
-                :digit $ finger-count tree
-                _ $ raise "|unknown kind of tree"
-              , 1
-          :examples $ []
-          :schema $ quote $ Fn Dynamic (-> Number)
-        'finger-count-right $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defn finger-count-right (tree)
-            if (list? tree)
-              match (&list:nth tree 0)
-                :finger-tree $ match (&list:nth tree 1) (:empty 0)
-                  :single $ let
-                      inside $ &list:nth tree 2
-                    finger-count inside
-                  :deep $ let
-                      inside $ decode-map-as (&list:nth tree 2) (Map Tag Dynamic)
-                      right-tree $ get inside :right
-                      middle-tree $ get inside :middle
-                    +
-                      .unwrap-or (.map right-tree finger-count) 1
-                      .unwrap-or (.map middle-tree finger-count-right) 1
-                  _ $ raise "|unknown kind of finger-tree"
-                :node $ finger-count tree
-                :digit $ finger-count tree
-                _ $ raise "|unknown kind of tree"
-              , 1
-          :examples $ []
-          :schema $ quote $ Fn Dynamic (-> Number)
-        'nth0 $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defmacro nth0 (xs)
-            quasiquote $ &list:nth ~xs 0
-          :examples $ []
-          :schema $ quote $ Macro Syntax
-            -> $ Expr Dynamic
-        'nth1 $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defmacro nth1 (xs)
-            quasiquote $ &list:nth ~xs 1
-          :examples $ []
-          :schema $ quote $ Macro Syntax
-            -> $ Expr Dynamic
-        'nth2 $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defmacro nth2 (xs)
-            quasiquote $ &list:nth ~xs 2
-          :examples $ []
-          :schema $ quote $ Macro Syntax
-            -> $ Expr Dynamic
+          :schema $ quote $ Fn app.comp.fingertree/FingerNode (-> Number)
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.comp.fingertree
           :require
