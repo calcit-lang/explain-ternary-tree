@@ -15,17 +15,12 @@
             ; println |Store store $ :tab store
             let
                 cursor $ []
-                store-map $ decode-map-as store $ :: 'Map 'Tag 'Dynamic
-                states $ decode-map-as
-                  .unwrap-or (get store-map :states) ({})
-                  :: 'Map 'Tag 'Dynamic
+                states $ :states store
                 state $ decode-map-as
                   .unwrap-or (get states :data)
                     {} $ :finger? false
-                  :: 'Map 'Tag 'Dynamic
-                n $ decode-map-as
-                  .unwrap-or (get store-map :n) 1
-                  , 'Number
+                  Map Tag Dynamic
+                n $ :n store
                 finger? $ decode-map-as
                   .unwrap-or (get state :finger?) false
                   , 'Bool
@@ -44,26 +39,31 @@
                 comp-button $ {} (:text |Start)
                   :position $ [] 480 10
                   :align-right? false
-                  :on-pointertap $ fn (e d!) (js/clearInterval @*inc-task)
-                    reset! *inc-task $ js/setInterval
-                      fn () $ d! $ :: :inc
+                  :on-pointertap $ fn (e d!) (js-ffi.browser/clear-interval! @*inc-task)
+                    reset! *inc-task $ js-ffi.browser/set-interval!
+                      fn ()
+                        d! $ app.schema/Op :inc
+                        , &unit
                       , 1000
                 comp-slider (>> states :c)
                   {} (:unit 0.2) (:min 1) (:max 1000) (:round? true) (:value n)
                     :position $ [] -300 -20
                     :fill $ hslx 200 50 40
                     :color $ hslx 200 0 80
-                    :on-change $ fn (value d!)
-                      d! $ :: :n value
+                    :on-change $ fn (value dispatch!)
+                      hint-fn $ Fn Number
+                        Fn app.schema/Op $ -> Unit
+                        -> Unit
+                      dispatch! $ app.schema/Op :n value
                 comp-button $ {}
                   :text $ if finger? |Ternary? |Finger?
                   :position $ [] -100 -20
                   :align-right? false
                   :on-pointertap $ fn (e d!)
-                    d! $ :: :states cursor $ update state :finger? not
+                    d! $ app.schema/Op :states cursor $ update state :finger? not
                 if finger? (comp-fingertree-demo n) (comp-ternary-demo n)
           :examples $ []
-          :schema $ quote $ Fn (Map Tag Dynamic) (-> phlox.schema/PhloxElement) (:features :js-ffi)
+          :schema $ quote $ Fn app.schema/Store (-> phlox.schema/PhloxElement) (:features :js-ffi)
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.comp.container
           :require
@@ -100,10 +100,10 @@
                             :points $ [] base next
                           comp-finger-node (nth2 tree) next level
                       :deep $ let
-                          inside $ decode-map-as (nth2 tree) (:: 'Map 'Tag 'Dynamic)
-                          left-tree $ .unwrap-or (get inside :left) nil
-                          middle-tree $ .unwrap-or (get inside :middle) nil
-                          right-tree $ .unwrap-or (get inside :right) nil
+                          inside $ decode-map-as (nth2 tree) (Map Tag Dynamic)
+                          left-tree $ .unwrap $ get inside :left
+                          middle-tree $ .unwrap $ get inside :middle
+                          right-tree $ .unwrap $ get inside :right
                           size-left $ finger-count left-tree
                           size-right $ finger-count right-tree
                           size-middle $ finger-count middle-tree
@@ -133,7 +133,7 @@
                   :node $ container ({})
                     match (nth1 tree)
                       :node2 $ let
-                          inside $ decode-map-as (nth2 tree) (:: 'List 'Dynamic)
+                          inside $ decode-map-as (nth2 tree) (List Dynamic)
                           left $ complex/add base $ [] (* -1 w-unit) (* 1.5 h-unit)
                           right $ complex/add base $ [] (* 1 w-unit) (* 1.5 h-unit)
                         container ({})
@@ -144,7 +144,7 @@
                           polyline $ {} (:style style-line)
                             :points $ [] base right
                       :node3 $ let
-                          inside $ decode-map-as (nth2 tree) (:: 'List 'Dynamic)
+                          inside $ decode-map-as (nth2 tree) (List Dynamic)
                           size-left $ finger-count $ nth0 inside
                           size-middle $ finger-count $ nth1 inside
                           size-right $ finger-count $ nth2 inside
@@ -174,7 +174,7 @@
                         :color $ hclx 40 80 60
                       :fill $ hclx 40 80 60
                   :digit $ let
-                      inside $ decode-map-as (nth2 tree) (:: 'List 'Dynamic)
+                      inside $ decode-map-as (nth2 tree) (List Dynamic)
                     match (nth1 tree)
                       :d1 $ let
                           next $ complex/add base $ [] 0 (* 1.5 h-unit)
@@ -269,7 +269,7 @@
             if
               = :digit $ &list:nth digits 0
               let
-                  inside $ decode-map-as (&list:nth digits 2) (:: 'List 'Dynamic)
+                  inside $ decode-map-as (&list:nth digits 2) (List Dynamic)
                 match (&list:nth digits 1)
                   :d1 $ [] :digit :d2 $ conj inside x
                   :d2 $ [] :digit :d3 $ conj inside x
@@ -298,17 +298,17 @@
                   :middle $ [] :finger-tree :empty nil
                   :right $ [] :digit :d1 $ [] x
                 :deep $ let
-                    inside $ decode-map-as (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
+                    inside $ decode-map-as (&list:nth tree 2) (Map Tag Dynamic)
                     right-digit $ decode-map-as
                       .unwrap-or (get inside :right)
                         [] :digit :d1 $ []
-                      :: 'List 'Dynamic
+                      List Dynamic
                     middle-tree $ decode-map-as
                       .unwrap-or (get inside :middle) ([] :finger-tree :empty nil)
-                      :: 'List 'Dynamic
+                      List Dynamic
                   if (digit-full? right-digit)
                     let
-                        digit-internal $ decode-map-as (&list:nth right-digit 2) (:: 'List 'Dynamic)
+                        digit-internal $ decode-map-as (&list:nth right-digit 2) (List Dynamic)
                       [] :finger-tree :deep $ -> inside
                         assoc :middle $ finger-append middle-tree $ [] :node :node3 (take digit-internal 3)
                         assoc :right $ [] :digit :d2 $ [] (&list:nth digit-internal 3) x
@@ -344,27 +344,30 @@
                       inside $ nth2 tree
                     finger-count inside
                   :deep $ let
-                      inside $ decode-map-as (nth2 tree) (:: 'Map 'Tag 'Dynamic)
-                      left-tree $ .unwrap-or (get inside :left) nil
-                      middle-tree $ .unwrap-or (get inside :middle) nil
-                      right-tree $ .unwrap-or (get inside :right) nil
-                    + (finger-count left-tree) (finger-count middle-tree) (finger-count right-tree)
+                      inside $ decode-map-as (nth2 tree) (Map Tag Dynamic)
+                      left-tree $ get inside :left
+                      middle-tree $ get inside :middle
+                      right-tree $ get inside :right
+                    +
+                      .unwrap-or (.map left-tree finger-count) 1
+                      .unwrap-or (.map middle-tree finger-count) 1
+                      .unwrap-or (.map right-tree finger-count) 1
                   _ $ raise "|unknown kind of finger-tree"
                 :node $ match (nth1 tree)
                   :node2 $ let
-                      inside $ decode-map-as (&list:nth tree 2) (:: 'List 'Dynamic)
+                      inside $ decode-map-as (&list:nth tree 2) (List Dynamic)
                     +
                       finger-count $ &list:nth inside 0
                       finger-count $ &list:nth inside 1
                   :node3 $ let
-                      inside $ decode-map-as (&list:nth tree 2) (:: 'List 'Dynamic)
+                      inside $ decode-map-as (&list:nth tree 2) (List Dynamic)
                     +
                       finger-count $ &list:nth inside 0
                       finger-count $ &list:nth inside 1
                       finger-count $ &list:nth inside 2
                   _ $ raise "|unknown kind of node"
                 :digit $ let
-                    inside $ decode-map-as (nth2 tree) (:: 'List 'Dynamic)
+                    inside $ decode-map-as (nth2 tree) (List Dynamic)
                   match (nth1 tree)
                     :d1 $ finger-count $ &list:nth inside 0
                     :d2 $ +
@@ -393,10 +396,12 @@
                       inside $ &list:nth tree 2
                     finger-count inside
                   :deep $ let
-                      inside $ decode-map-as (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
-                      left-tree $ .unwrap-or (get inside :left) nil
-                      middle-tree $ .unwrap-or (get inside :middle) nil
-                    + (finger-count left-tree) (finger-count-left middle-tree)
+                      inside $ decode-map-as (&list:nth tree 2) (Map Tag Dynamic)
+                      left-tree $ get inside :left
+                      middle-tree $ get inside :middle
+                    +
+                      .unwrap-or (.map left-tree finger-count) 1
+                      .unwrap-or (.map middle-tree finger-count-left) 1
                   _ $ raise "|unknown kind of finger-tree"
                 :node $ finger-count tree
                 :digit $ finger-count tree
@@ -413,10 +418,12 @@
                       inside $ &list:nth tree 2
                     finger-count inside
                   :deep $ let
-                      inside $ decode-map-as (&list:nth tree 2) (:: 'Map 'Tag 'Dynamic)
-                      right-tree $ .unwrap-or (get inside :right) nil
-                      middle-tree $ .unwrap-or (get inside :middle) nil
-                    + (finger-count right-tree) (finger-count-right middle-tree)
+                      inside $ decode-map-as (&list:nth tree 2) (Map Tag Dynamic)
+                      right-tree $ get inside :right
+                      middle-tree $ get inside :middle
+                    +
+                      .unwrap-or (.map right-tree finger-count) 1
+                      .unwrap-or (.map middle-tree finger-count-right) 1
                   _ $ raise "|unknown kind of finger-tree"
                 :node $ finger-count tree
                 :digit $ finger-count tree
@@ -457,8 +464,8 @@
       :defs $ {}
         'Tree $ %{} 'CodeEntry (:doc |)
           :code $ quote $ def Tree
-            defenum Tree (:leaf 'Number)
-              :branch $ quote $ List app.comp.ternary-tree/Tree
+            defenum Tree (:leaf Number)
+              :branch $ List app.comp.ternary-tree/Tree
           :examples $ []
         'build-ternary-tree $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn build-ternary-tree (size offset)
@@ -632,16 +639,16 @@
         '*store $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defref *store schema/store
           :examples $ []
-          :schema $ quote $ Ref (Map Tag Dynamic)
+          :schema $ quote $ Ref app.schema/Store
         'FontFaceObserverHost $ %{} 'CodeEntry (:doc |)
           :code $ quote $ deftrait FontFaceObserverHost
-            .load $ quote $ Fn (-> JsObject)
+            .load $ Fn $ -> JsObject
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :browser)
           :schema $ quote Trait
         'PromiseHost $ %{} 'CodeEntry (:doc |)
           :code $ quote $ deftrait PromiseHost
-            .then $ quote $ Fn
+            .then $ Fn
               Fn Dynamic $ -> Unit
               -> Dynamic
           :examples $ []
@@ -650,19 +657,23 @@
         'dispatch! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn dispatch! (op)
             when dev? $ println |dispatch! op
-            let
-                current-n $ decode-map-as
-                  .unwrap-or (get @*store :n) 0
-                  , 'Number
-              if
-                and
-                  = op $ :: :inc
-                  >= current-n 200
-                js/clearInterval @*inc-task
-                reset! *store $ updater @*store op
+            if
+              and
+                = op $ schema/Op :inc
+                >= (:n @*store) 200
+              js-ffi.browser/clear-interval! @*inc-task
+              reset! *store $ updater @*store op
             , &unit
           :examples $ []
-          :schema $ quote $ Fn Enum (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn app.schema/Op (-> Unit) (:features :js-ffi)
+        'dispatch-event! $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn dispatch-event! (event)
+            match (schema/decode-op event)
+              (:some op) (dispatch! op)
+              (:none) (eprintln "|unknown op" event)
+            , &unit
+          :examples $ []
+          :schema $ quote $ Fn AnyEnum (-> Unit) (:features :js-ffi) (:open :decode)
         'main! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn main! () (; js/console.log PIXI)
             if dev? $ load-console-formatter!
@@ -690,7 +701,7 @@
           :schema $ quote $ Fn (-> Unit) (:features :js-ffi)
         'render-app! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn render-app! ()
-            render! (comp-container @*store) dispatch! $ {}
+            render! (comp-container @*store) dispatch-event! $ {}
           :examples $ []
           :schema $ quote $ Fn (-> Unit) (:features :js-ffi)
       :ns $ %{} 'NsEntry (:doc |)
@@ -708,14 +719,44 @@
             app.task :refer $ *inc-task
             touch-control.core :refer $ render-control! start-control-loop! replace-control-loop!
     'app.schema $ %{} 'FileEntry
-      :defs $ {} $ 'store
-        %{} 'CodeEntry (:doc |)
-          :code $ quote $ def store
-            {}
-              :states $ {} $ :cursor ([])
-              :n 1
+      :defs $ {}
+        'Op $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defenum Op (:n Number) (:inc)
+            :states (List Dynamic) Dynamic
+            :hydrate-storage app.schema/Store
           :examples $ []
-          :schema $ quote $ Map Tag Dynamic
+          :schema $ quote EnumDef
+        'Store $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defstruct Store
+            :states $ Map Dynamic Dynamic
+            :n Number
+          :examples $ []
+          :schema $ quote StructDef
+        'decode-op $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defn decode-op (op)
+            match op
+              (:n n)
+                Option :some $ Op :n $ decode-map-as n Number
+              (:inc)
+                Option :some $ Op :inc
+              (:states cursor data)
+                Option :some $ Op :states
+                  decode-map-as cursor $ List Dynamic
+                  , data
+              (:hydrate-storage data)
+                Option :some $ Op :hydrate-storage $ decode-map-as
+                  if (struct? data) (&struct:to-map data) data
+                  , Store
+              _ $ Option :none
+          :examples $ []
+          :schema $ quote $ Fn AnyEnum
+            -> $ Option app.schema/Op
+            :open :decode
+        'store $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ def store
+            Store :n 1 :states $ {} $ :cursor ([])
+          :examples $ []
+          :schema $ quote app.schema/Store
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.schema
     'app.task $ %{} 'FileEntry
@@ -723,7 +764,7 @@
         %{} 'CodeEntry (:doc |)
           :code $ quote $ defref *inc-task 0
           :examples $ []
-          :schema $ quote $ Ref Dynamic
+          :schema $ quote $ Ref Number
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.task
     'app.updater $ %{} 'FileEntry
@@ -731,37 +772,29 @@
         %{} 'CodeEntry (:doc |)
           :code $ quote $ defn updater (store op)
             match op
-              (:n n)
-                assoc store :n $ decode-map-as n 'Number
+              (:n n) (assoc store :n n)
               (:inc)
-                update store :n $ fn (n)
-                  inc $ decode-map-as n 'Number
+                assoc store :n $ inc $ :n store
               (:states cursor data)
-                update-states store
-                  decode-map-as cursor $ :: 'List 'Dynamic
-                  , data
-              (:hydrate-storage data)
-                decode-map-as data $ :: 'Map 'Tag 'Dynamic
-              _ $ do (eprintln "|unknown op" op) store
+                assoc store :states $ decode-map-as
+                  assoc-in (:states store) (conj cursor :data) data
+                  Map Dynamic Dynamic
+              (:hydrate-storage data) data
           :examples $ []
-          :schema $ quote $ Fn (Map Tag Dynamic) Enum
-            -> $ Map Tag Dynamic
+          :schema $ quote $ Fn app.schema/Store app.schema/Op (-> app.schema/Store)
           :tests $ [] $ %{} 'TestEntry (:name |enum-count-and-cursor)
             :code $ quote $ let
-                store $ {} (:n 1)
-                  :states $ {} $ :cursor ([])
-                incremented $ updater store $ :: :inc
-                selected $ updater incremented $ :: :n 10
+                incremented $ updater app.schema/store $ .unwrap
+                  app.schema/decode-op $ :: :inc
+                selected $ updater incremented $ .unwrap
+                  app.schema/decode-op $ :: :n 10
                 state $ {} $ :finger? true
-                updated $ updater selected $ :: :states ([]) state
-              assert=
-                .unwrap $ get incremented :n
-                , 2
-              assert=
-                .unwrap $ get selected :n
-                , 10
+                updated $ updater selected $ .unwrap
+                  app.schema/decode-op $ :: :states ([]) state
+              assert= (:n incremented) 2
+              assert= (:n selected) 10
               assert= (Result :ok state)
-                get-in updated $ [] :states :data
+                get-in (:states updated) ([] :data)
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.updater
           :require $ phlox.cursor :refer $ update-states
