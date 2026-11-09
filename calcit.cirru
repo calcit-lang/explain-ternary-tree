@@ -14,16 +14,15 @@
           :code $ quote $ defn comp-container (store)
             ; println |Store store $ :tab store
             let
-                cursor $ []
-                states $ :states store
-                state $ decode-map-as
-                  .unwrap-or (get states :data)
-                    {} $ :finger? false
-                  Map Tag Dynamic
                 n $ :n store
-                finger? $ decode-map-as
-                  .unwrap-or (get state :finger?) false
-                  , 'Bool
+                finger? $ :finger? store
+                slider-state $ match (:slider-drag store)
+                  (:some drag)
+                    {}
+                      :cursor $ [] :c
+                      :data $ .to-map drag
+                  (:none)
+                    {} $ :cursor $ [] :c
                 viewport-height $ decode-map-as js/window.innerHeight 'Number
               container
                 {} $ :position $ [] 0
@@ -45,22 +44,21 @@
                         d! $ app.schema/Op :inc
                         , &unit
                       , 1000
-                comp-slider (>> states :c)
-                  {} (:unit 0.2) (:min 1) (:max 1000) (:round? true) (:value n)
-                    :position $ [] -300 -20
-                    :fill $ hslx 200 50 40
-                    :color $ hslx 200 0 80
-                    :on-change $ fn (value dispatch!)
-                      hint-fn $ Fn Number
-                        Fn app.schema/Op $ -> Unit
-                        -> Unit
-                      dispatch! $ app.schema/Op :n value
+                comp-slider slider-state $ {} (:unit 0.2) (:min 1) (:max 1000) (:round? true) (:value n)
+                  :position $ [] -300 -20
+                  :fill $ hslx 200 50 40
+                  :color $ hslx 200 0 80
+                  :on-change $ fn (value dispatch!)
+                    hint-fn $ Fn Number
+                      Fn app.schema/Op $ -> Unit
+                      -> Unit
+                    dispatch! $ app.schema/Op :n value
                 comp-button $ {}
                   :text $ if finger? |Ternary? |Finger?
                   :position $ [] -100 -20
                   :align-right? false
                   :on-pointertap $ fn (e d!)
-                    d! $ app.schema/Op :states cursor $ update state :finger? not
+                    d! $ app.schema/Op :toggle-model
                 if finger? (comp-fingertree-demo n) (comp-ternary-demo n)
           :examples $ []
           :schema $ quote $ Fn app.schema/Store (-> phlox.schema/PhloxElement) (:features :js-ffi)
@@ -607,40 +605,37 @@
     'app.schema $ %{} 'FileEntry
       :defs $ {}
         'Op $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defenum Op (:n Number) (:inc)
-            :states (List Dynamic) Dynamic
-            :hydrate-storage app.schema/Store
+          :code $ quote $ defenum Op (:n Number) (:inc) (:toggle-model) (:slider-drag app.schema/SliderDrag)
           :examples $ []
           :schema $ quote EnumDef
+        'SliderDrag $ %{} 'CodeEntry (:doc |)
+          :code $ quote $ defstruct SliderDrag (:v0 Number) (:x0 Number) (:dragging? Bool)
+          :examples $ []
+          :schema $ quote StructDef
         'Store $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ defstruct Store
-            :states $ Map Dynamic Dynamic
-            :n Number
+          :code $ quote $ defstruct Store (:n Number) (:finger? Bool)
+            :slider-drag $ Option app.schema/SliderDrag
           :examples $ []
           :schema $ quote StructDef
         'decode-op $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn decode-op (op)
-            match op
-              (:n n)
-                Option :some $ Op :n $ decode-map-as n Number
-              (:inc)
-                Option :some $ Op :inc
-              (:states cursor data)
-                Option :some $ Op :states
-                  decode-map-as cursor $ List Dynamic
-                  , data
-              (:hydrate-storage data)
-                Option :some $ Op :hydrate-storage $ decode-map-as
-                  if (struct? data) (&struct:to-map data) data
-                  , Store
-              _ $ Option :none
+            if
+              = (enum-definition op) (Option :some Op)
+              Option :some $ decode-map-as op Op
+              match op
+                (:states cursor data)
+                  if
+                    = cursor $ [] :c
+                    Option :some $ Op :slider-drag $ decode-map-as data SliderDrag
+                    Option :none
+                _ $ Option :none
           :examples $ []
           :schema $ quote $ Fn AnyEnum
             -> $ Option app.schema/Op
             :open :decode
         'store $ %{} 'CodeEntry (:doc |)
           :code $ quote $ def store
-            Store :n 1 :states $ {} $ :cursor ([])
+            Store :n 1 :finger? false :slider-drag $ Option :none
           :examples $ []
           :schema $ quote app.schema/Store
       :ns $ %{} 'NsEntry (:doc |)
@@ -661,26 +656,25 @@
               (:n n) (assoc store :n n)
               (:inc)
                 assoc store :n $ inc $ :n store
-              (:states cursor data)
-                assoc store :states $ decode-map-as
-                  assoc-in (:states store) (conj cursor :data) data
-                  Map Dynamic Dynamic
-              (:hydrate-storage data) data
+              (:toggle-model)
+                assoc store :finger? $ not $ :finger? store
+              (:slider-drag drag)
+                assoc store :slider-drag $ Option :some drag
           :examples $ []
           :schema $ quote $ Fn app.schema/Store app.schema/Op (-> app.schema/Store)
           :tests $ [] $ %{} 'TestEntry (:name |enum-count-and-cursor)
             :code $ quote $ let
-                incremented $ updater app.schema/store $ .unwrap
-                  app.schema/decode-op $ :: :inc
-                selected $ updater incremented $ .unwrap
-                  app.schema/decode-op $ :: :n 10
-                state $ {} $ :finger? true
-                updated $ updater selected $ .unwrap
-                  app.schema/decode-op $ :: :states ([]) state
-              assert= (:n incremented) 2
-              assert= (:n selected) 10
-              assert= (Result :ok state)
-                get-in (:states updated) ([] :data)
+                incremented $ updater app.schema/store $ app.schema/Op :inc
+                selected $ updater incremented $ app.schema/Op :n 10
+                toggled $ updater selected $ app.schema/Op :toggle-model
+                drag $ app.schema/SliderDrag :v0 10 :x0 32 :dragging? true
+                updated $ updater toggled $ .unwrap
+                  app.schema/decode-op $ :: :states ([] :c) (.to-map drag)
+              assert= 2 $ :n incremented
+              assert= 10 $ :n updated
+              assert= true $ :finger? updated
+              assert= (Option :some drag) (:slider-drag updated)
+              assert= (Option :none)
+                app.schema/decode-op $ :: :states ([] :other) ({})
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.updater
-          :require $ phlox.cursor :refer $ update-states
