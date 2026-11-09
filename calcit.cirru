@@ -349,10 +349,10 @@
     'app.comp.ternary-tree $ %{} 'FileEntry
       :defs $ {}
         'Tree $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ def Tree
-            defenum Tree (:leaf Number)
-              :branch $ List app.comp.ternary-tree/Tree
+          :code $ quote $ defenum Tree (:leaf Number)
+            :branch $ List app.comp.ternary-tree/Tree
           :examples $ []
+          :schema $ quote EnumDef
         'build-ternary-tree $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn build-ternary-tree (size offset)
             cond
@@ -494,7 +494,7 @@
             {} (:width 2) (:alpha 1)
               :color $ hclx 220 100 60
           :examples $ []
-          :schema $ quote Dynamic
+          :schema $ quote $ Map Tag Number
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.comp.ternary-tree
           :require
@@ -535,8 +535,8 @@
         'PromiseHost $ %{} 'CodeEntry (:doc |)
           :code $ quote $ deftrait PromiseHost
             .then $ Fn
-              Fn Dynamic $ -> Unit
-              -> Dynamic
+              Fn app.main/FontFaceObserverHost $ -> Unit
+              -> JsObject
           :examples $ []
           :ffi $ {} (:backend :js) (:kind :external-object) (:target :browser)
           :schema $ quote Trait
@@ -566,7 +566,7 @@
             let
                 observer $ unsafe-coerce (new FontFaceObserver/default "|Josefin Sans") FontFaceObserverHost
                 font-load $ unsafe-coerce (.!load observer) PromiseHost
-              .!then font-load $ fn (event) (render-app!)
+              .!then font-load $ fn (_observer) (render-app!)
             add-watch! *store :change $ fn (store prev) (render-app!)
             render-control!
             start-control-loop! 8 on-control-event
