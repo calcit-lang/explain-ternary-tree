@@ -34,7 +34,8 @@
                 comp-button $ {} (:text |Fullscreen)
                   :position $ [] 400 10
                   :align-right? false
-                  :on-pointertap $ fn (e d!) (js/document.body.requestFullscreen)
+                  :on-pointertap $ fn (e d!)
+                    js-ffi.browser/element-request-fullscreen! $ .unwrap $ js-ffi.browser/document-body
                 comp-button $ {} (:text |Start)
                   :position $ [] 480 10
                   :align-right? false
@@ -249,7 +250,7 @@
                     :align :center
                     :style $ {} (:fill |red) (:font-size 10) (:font-family |Hind)
           :examples $ []
-          :schema $ quote $ Fn app.comp.fingertree/FingerNode (List Number) Number (-> phlox.schema/PhloxElement)
+          :schema $ quote $ Fn FingerNode (List Number) Number (-> phlox.schema/PhloxElement)
         'comp-fingertree-demo $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-fingertree-demo (size)
             let
@@ -270,7 +271,7 @@
               (:d3 a b c) (FingerDigit :d4 a b c value)
               (:d4 _a _b _c _d) (raise "|already full, cannot append")
           :examples $ []
-          :schema $ quote $ Fn app.comp.fingertree/FingerDigit app.comp.fingertree/FingerNode (-> app.comp.fingertree/FingerDigit)
+          :schema $ quote $ Fn FingerDigit FingerNode (-> FingerDigit)
         'finger-append $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn finger-append (tree value)
             match tree
@@ -285,7 +286,7 @@
                       FingerDigit :d2 d value
                   _ $ FingerTree :deep left middle $ digit-append right value
           :examples $ []
-          :schema $ quote $ Fn app.comp.fingertree/FingerTree app.comp.fingertree/FingerNode (-> app.comp.fingertree/FingerTree)
+          :schema $ quote $ Fn FingerTree FingerNode (-> FingerTree)
           :tests $ [] $ %{} 'TestEntry (:name |append-preserves-leaves)
             :code $ quote $ do
               assert=
@@ -332,7 +333,7 @@
                   (:d4 a b c d)
                     + (finger-count a) (finger-count b) (finger-count c) (finger-count d)
           :examples $ []
-          :schema $ quote $ Fn app.comp.fingertree/FingerNode (-> Number)
+          :schema $ quote $ Fn FingerNode (-> Number)
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.comp.fingertree
           :require
@@ -371,7 +372,7 @@
                   build-ternary-tree middle-size $ + offset left-size
                   build-ternary-tree right-size $ + offset left-size middle-size
           :examples $ []
-          :schema $ quote $ Fn Number Number (-> app.comp.ternary-tree/Tree)
+          :schema $ quote $ Fn Number Number (-> Tree)
         'comp-node $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-node (tree base center? level)
             let
@@ -437,7 +438,7 @@
                     :style $ {} (:font-size 13) (:font-family |Hind)
                       :fill $ hclx 220 90 80
           :examples $ []
-          :schema $ quote $ Fn app.comp.ternary-tree/Tree (List Number) Bool Number (-> phlox.schema/PhloxElement)
+          :schema $ quote $ Fn Tree (List Number) Bool Number (-> phlox.schema/PhloxElement)
         'comp-ternary-demo $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn comp-ternary-demo (size)
             let
@@ -452,11 +453,11 @@
               (:branch children)
                 foldl (map children count-recursive) 0 &+
           :examples $ []
-          :schema $ quote $ Fn app.comp.ternary-tree/Tree (-> Number)
+          :schema $ quote $ Fn Tree (-> Number)
         'get-vec-tree $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn get-vec-tree (n) (build-ternary-tree n 0)
           :examples $ []
-          :schema $ quote $ Fn Number (-> app.comp.ternary-tree/Tree)
+          :schema $ quote $ Fn Number (-> Tree)
           :tests $ [] $ %{} 'TestEntry (:name |preserves-leaf-count)
             :code $ quote $ do
               assert=
@@ -523,7 +524,7 @@
         '*store $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defref *store schema/store
           :examples $ []
-          :schema $ quote $ Ref app.schema/Store
+          :schema $ quote $ Ref schema/Store
         'FontFaceObserverHost $ %{} 'CodeEntry (:doc |)
           :code $ quote $ deftrait FontFaceObserverHost
             .load $ Fn $ -> JsObject
@@ -549,7 +550,7 @@
               reset! *store $ updater @*store op
             , &unit
           :examples $ []
-          :schema $ quote $ Fn app.schema/Op (-> Unit) (:features :js-ffi)
+          :schema $ quote $ Fn schema/Op (-> Unit) (:features :js-ffi)
         'dispatch-event! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn dispatch-event! (event)
             match (schema/decode-op event)
@@ -620,24 +621,23 @@
         'decode-op $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn decode-op (op)
             if
-              = (enum-definition op) (Option :some Op)
-              Option :some $ decode-map-as op Op
+              = (enum-definition op) (Some Op)
+              Some $ decode-map-as op Op
               match op
                 (:states cursor data)
                   if
                     = cursor $ [] :c
-                    Option :some $ Op :slider-drag $ decode-map-as data SliderDrag
-                    Option :none
-                _ $ Option :none
+                    Some $ Op :slider-drag $ decode-map-as data SliderDrag
+                    , None
+                _ None
           :examples $ []
           :schema $ quote $ Fn AnyEnum
-            -> $ Option app.schema/Op
+            -> $ Option Op
             :open :decode
         'store $ %{} 'CodeEntry (:doc |)
-          :code $ quote $ def store
-            Store :n 1 :finger? false :slider-drag $ Option :none
+          :code $ quote $ def store (Store :n 1 :finger? false :slider-drag None)
           :examples $ []
-          :schema $ quote app.schema/Store
+          :schema $ quote Store
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.schema
     'app.task $ %{} 'FileEntry
@@ -659,7 +659,7 @@
               (:toggle-model)
                 assoc store :finger? $ not $ :finger? store
               (:slider-drag drag)
-                assoc store :slider-drag $ Option :some drag
+                assoc store :slider-drag $ Some drag
           :examples $ []
           :schema $ quote $ Fn app.schema/Store app.schema/Op (-> app.schema/Store)
           :tests $ [] $ %{} 'TestEntry (:name |enum-count-and-cursor)
@@ -673,8 +673,7 @@
               assert= 2 $ :n incremented
               assert= 10 $ :n updated
               assert= true $ :finger? updated
-              assert= (Option :some drag) (:slider-drag updated)
-              assert= (Option :none)
-                app.schema/decode-op $ :: :states ([] :other) ({})
+              assert= (Some drag) (:slider-drag updated)
+              assert= None $ app.schema/decode-op $ :: :states ([] :other) ({})
       :ns $ %{} 'NsEntry (:doc |)
         :code $ quote $ ns app.updater

@@ -14,7 +14,7 @@ and fingertree:
 
 ### 使用者影响
 
-本分支配对正式 **Calcit / @calcit/procs 0.40.0**、Node24、Yarn4.18.0 和 Caps0.1.1。升级后重新安装依赖、生成 JS、重启开发服务并刷新页面；项目版本仍0.4.12，不代表新增 tag/npm 发布。
+本分支配对正式 **Calcit / @calcit/procs 0.41.0**、Node24、Yarn4.18.0 和 Caps0.1.1。升级后重新安装依赖、生成 JS、重启开发服务并刷新页面；项目版本仍0.4.12，不代表新增 tag/npm 发布。
 
 本项目展示两种教学模型，不是当前 Calcit List 内存结构的检查器。Calcit 已使用 FingerVec；三叉树由应用自身构造，沿用 [ternary-tree.ts 的分组规则](https://github.com/calcit-lang/ternary-tree.ts/blob/0.0.26/src/list.mts)：余数1分到中间，余数2分到两侧。保留 Finger Tree 切换、坐标公式、默认值、滑块、计时器和页面报错用 hud!。
 
