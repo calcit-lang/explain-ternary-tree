@@ -558,7 +558,7 @@
               (:none) (eprintln "|unknown op" event)
             , &unit
           :examples $ []
-          :schema $ quote $ Fn AnyEnum (-> Unit) (:features :io :js-ffi :state) (:open :decode)
+          :schema $ quote $ Fn Input (-> Unit) (:generics Input) (:features :io :js-ffi :state)
         'main! $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn main! () (; js/console.log PIXI)
             if dev? $ load-console-formatter!
@@ -621,7 +621,8 @@
         'decode-op $ %{} 'CodeEntry (:doc |)
           :code $ quote $ defn decode-op (op)
             if
-              = (enum-definition op) (Some Op)
+              and (enum? op)
+                = (enum-definition op) (Some Op)
               Some $ decode-map-as op Op
               match op
                 (:states cursor data)
@@ -631,9 +632,9 @@
                     , None
                 _ None
           :examples $ []
-          :schema $ quote $ Fn AnyEnum
+          :schema $ quote $ Fn Input
             -> $ Option Op
-            :open :decode
+            :generics Input
         'store $ %{} 'CodeEntry (:doc |)
           :code $ quote $ def store (Store :n 1 :finger? false :slider-drag None)
           :examples $ []
