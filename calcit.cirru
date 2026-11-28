@@ -627,7 +627,7 @@
               match op
                 (:states cursor data)
                   if
-                    = cursor $ [] :c
+                    &= cursor $ [] :c
                     Some $ Op :slider-drag $ decode-map-as data SliderDrag
                     , None
                 _ None
